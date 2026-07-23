@@ -1,0 +1,2 @@
+# CSUFsched
+csuf schedule builder
