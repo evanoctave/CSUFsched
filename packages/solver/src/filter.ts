@@ -20,6 +20,9 @@ export function filterSections(
   const reasons = new Set<EliminationReason>();
   const viable: Section[] = [];
 
+  const { earliestStart, latestEnd } = prefs;
+
+  // First matching reason wins per section; check order defines UI message priority.
   for (const s of course.sections) {
     if (busyBlocks.some((b) => sectionConflictsWithBlock(s, b))) {
       reasons.add('busy-block');
@@ -29,14 +32,11 @@ export function filterSections(
       reasons.add('avoid-day');
       continue;
     }
-    if (
-      prefs.earliestStart !== undefined &&
-      s.meetings.some((m) => m.startMin < prefs.earliestStart!)
-    ) {
+    if (earliestStart !== undefined && s.meetings.some((m) => m.startMin < earliestStart)) {
       reasons.add('time-window');
       continue;
     }
-    if (prefs.latestEnd !== undefined && s.meetings.some((m) => m.endMin > prefs.latestEnd!)) {
+    if (latestEnd !== undefined && s.meetings.some((m) => m.endMin > latestEnd)) {
       reasons.add('time-window');
       continue;
     }

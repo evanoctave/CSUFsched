@@ -71,4 +71,19 @@ describe('filterSections', () => {
     );
     expect(viable).toHaveLength(1);
   });
+
+  it('collects distinct reasons from different sections', () => {
+    const course = mkCourse('CPSC 121', 3, [
+      mkSection([{ days: ['M'], startMin: 600, endMin: 675 }]),
+      mkSection([{ days: ['F'], startMin: 600, endMin: 675 }]),
+    ]);
+    const { viable, reasons } = filterSections(
+      course,
+      [{ day: 'M', startMin: 0, endMin: 1440 }],
+      { ...basePrefs, avoidDays: ['F'] },
+    );
+    expect(viable).toHaveLength(0);
+    expect(reasons.has('busy-block')).toBe(true);
+    expect(reasons.has('avoid-day')).toBe(true);
+  });
 });
