@@ -50,5 +50,5 @@ export function buildIcs(
     });
   }
   lines.push('END:VCALENDAR');
-  return lines.join('\r\n');
+  return lines.join('\r\n') + '\r\n';
 }
