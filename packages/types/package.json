@@ -1,0 +1,15 @@
+{
+  "name": "@csufsched/types",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "echo \"no tests\" && exit 0"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.0"
+  }
+}
