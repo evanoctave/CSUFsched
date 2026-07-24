@@ -1,9 +1,9 @@
-export type Day = 'M' | 'Tu' | 'W' | 'Th' | 'F' | 'Sa';
+export type Day = 'M' | 'Tu' | 'W' | 'Th' | 'F' | 'Sa'; // Sunday intentionally excluded — CSUF rarely schedules Sunday classes
 
 export interface Meeting {
   days: Day[];
   startMin: number; // minutes from midnight, e.g. 600 = 10:00am
-  endMin: number;
+  endMin: number; // minutes from midnight
   building?: string;
   room?: string;
 }
@@ -50,9 +50,9 @@ export interface SolverPrefs {
   avoidDays: Day[];
   earliestStart?: number; // minutes from midnight
   latestEnd?: number;
-  maxUnits: number; // default 18; UI warns above but solver still runs
-  weightProfRating: number; // 0–1
-  weightMinimizeGaps: number; // 0–1
+  maxUnits: number; // unit cap preference; not enforced by the solver
+  weightProfRating: number; // independent weight: 0 = ignore, 1 = full weight
+  weightMinimizeGaps: number; // independent weight: 0 = ignore, 1 = full weight
 }
 
 export interface SolverInput {
@@ -77,8 +77,8 @@ export interface CourseElimination {
 }
 
 export interface SolverResult {
-  candidates: ScheduleCandidate[]; // top 5 by score
-  eliminations: CourseElimination[]; // non-empty exactly when candidates is empty
+  candidates: ScheduleCandidate[]; // ranked by score, descending
+  eliminations: CourseElimination[]; // populated when solve fails; explains which courses had no viable sections
   totalValidCombos: number;
   truncated: boolean; // true if enumeration hit the combo cap
 }
