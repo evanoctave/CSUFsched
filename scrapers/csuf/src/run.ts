@@ -9,9 +9,9 @@ import {
   replaceMeetings,
   upsertProfessor,
 } from '@csufsched/db';
-import { parseClassRows } from './parse';
-import { rateLimited, fetchWithBackoff } from './rateLimit';
-import type { RawClassRow, ScrapedCourse } from './types';
+import { parseClassRows } from './parse.ts';
+import { rateLimited, fetchWithBackoff } from './rateLimit.ts';
+import type { RawClassRow, ScrapedCourse } from './types.ts';
 
 export interface ScrapeSummary {
   departmentsScraped: number;

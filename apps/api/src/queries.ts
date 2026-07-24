@@ -11,7 +11,7 @@ import {
   type SectionQueryRow,
   type MeetingQueryRow,
   type TagQueryRow,
-} from './assemble';
+} from './assemble.ts';
 
 export interface ApiQueries {
   listTerms(): Promise<TermSummary[]>;

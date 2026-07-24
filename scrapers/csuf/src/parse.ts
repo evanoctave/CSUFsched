@@ -1,5 +1,5 @@
 import type { Day } from '@csufsched/types';
-import type { RawClassRow, ScrapedCourse, ScrapedSection } from './types';
+import type { RawClassRow, ScrapedCourse, ScrapedSection } from './types.ts';
 
 const DAY_MAP: Record<string, Day> = {
   Mo: 'M',

@@ -1,4 +1,4 @@
-import type { RawTeacherNode, RmpTeacher } from './types';
+import type { RawTeacherNode, RmpTeacher } from './types.ts';
 
 export function mapTeacherNode(node: RawTeacherNode): RmpTeacher {
   return {

@@ -1,5 +1,5 @@
-export { createPool } from './pool';
-export { orderMigrations, runMigrations } from './migrate';
+export { createPool } from './pool.ts';
+export { orderMigrations, runMigrations } from './migrate.ts';
 export {
   upsertTerm,
   upsertDepartment,
@@ -8,7 +8,7 @@ export {
   replaceMeetings,
   upsertProfessor,
   replaceProfTags,
-} from './upserts';
+} from './upserts.ts';
 export type {
   TermRow,
   DepartmentRow,
@@ -16,4 +16,4 @@ export type {
   SectionRow,
   MeetingRow,
   ProfessorRow,
-} from './upserts';
+} from './upserts.ts';

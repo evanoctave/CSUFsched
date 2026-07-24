@@ -1,7 +1,7 @@
 import Fastify, { type FastifyInstance, type FastifyError } from 'fastify';
 import cors from '@fastify/cors';
 import rateLimit from '@fastify/rate-limit';
-import type { ApiQueries } from './queries';
+import type { ApiQueries } from './queries.ts';
 
 export interface AppOptions {
   corsOrigin: string;

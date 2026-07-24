@@ -1,6 +1,6 @@
 import { createPool } from '@csufsched/db';
-import { makeQueries } from './queries';
-import { buildApp } from './app';
+import { makeQueries } from './queries.ts';
+import { buildApp } from './app.ts';
 
 const databaseUrl = process.env.DATABASE_URL;
 if (!databaseUrl) {

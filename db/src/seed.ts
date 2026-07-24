@@ -1,4 +1,4 @@
-import { createPool } from './pool';
+import { createPool } from './pool.ts';
 import {
   upsertTerm,
   upsertDepartment,
@@ -7,7 +7,7 @@ import {
   replaceMeetings,
   upsertProfessor,
   replaceProfTags,
-} from './upserts';
+} from './upserts.ts';
 
 async function seed(databaseUrl: string): Promise<void> {
   const pool = createPool(databaseUrl);

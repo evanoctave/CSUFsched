@@ -1,4 +1,4 @@
-import type { RmpTeacher } from './types';
+import type { RmpTeacher } from './types.ts';
 
 export interface ParsedName {
   last: string;

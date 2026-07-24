@@ -2,9 +2,9 @@ import { writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createPool, upsertProfessor, replaceProfTags } from '@csufsched/db';
-import { mapTeacherNode } from './parse';
-import { matchProfessor } from './match';
-import type { RawTeacherNode, RmpTeacher } from './types';
+import { mapTeacherNode } from './parse.ts';
+import { matchProfessor } from './match.ts';
+import type { RawTeacherNode, RmpTeacher } from './types.ts';
 
 export interface UpdateSummary {
   matched: number;

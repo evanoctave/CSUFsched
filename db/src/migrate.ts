@@ -2,7 +2,7 @@ import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type pg from 'pg';
-import { createPool } from './pool';
+import { createPool } from './pool.ts';
 
 export function orderMigrations(files: string[]): string[] {
   const prefix = (f: string) => Number(/^(\d+)/.exec(f)?.[1] ?? 0);
