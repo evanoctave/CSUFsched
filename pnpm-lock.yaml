@@ -14,6 +14,9 @@ importers:
 
   db:
     dependencies:
+      '@csufsched/types':
+        specifier: workspace:*
+        version: link:../packages/types
       pg:
         specifier: ^8.12.0
         version: 8.22.0
