@@ -68,9 +68,9 @@ describe('scoreCombo', () => {
   });
 
   it('computes exact score for a known schedule', () => {
-    // one M class, prof 5.0, no gaps: ratingScore 1, gapScore 1, dayScore 5/6
+    // one M class, prof 5.0, no gaps: ratingScore 1, gapScore 1, dayScore 6/7
     const combo = [mkSection([{ days: ['M'], startMin: 600, endMin: 650 }], { professor: mkProf(5) })];
-    expect(scoreCombo(combo, prefs)).toBeCloseTo(100 * (1 + 1 + 0.2 * (5 / 6)));
+    expect(scoreCombo(combo, prefs)).toBeCloseTo(100 * (1 + 1 + 0.2 * (6 / 7)));
   });
 
   it('clamps gap score at 0 when gaps exceed 480 minutes', () => {
@@ -78,7 +78,7 @@ describe('scoreCombo', () => {
       mkSection([{ days: ['M'], startMin: 480, endMin: 530 }], { professor: mkProf(3) }),
       mkSection([{ days: ['M'], startMin: 1200, endMin: 1250 }], { professor: mkProf(3) }),
     ];
-    // 670 min gap → gapScore 0; ratingScore 0.5; dayScore 5/6
-    expect(scoreCombo(combo, prefs)).toBeCloseTo(100 * (0.5 + 0 + 0.2 * (5 / 6)));
+    // 670 min gap → gapScore 0; ratingScore 0.5; dayScore 6/7
+    expect(scoreCombo(combo, prefs)).toBeCloseTo(100 * (0.5 + 0 + 0.2 * (6 / 7)));
   });
 });

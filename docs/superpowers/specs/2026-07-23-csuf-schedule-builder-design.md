@@ -108,7 +108,7 @@ Layout A: course search sidebar left, weekly calendar right.
 
 ### Components
 
-- **CalendarGrid** — Mon–Sat columns, 7am–10pm rows, 15-minute snap. Renders section blocks, busy blocks, drag ghost previews.
+- **CalendarGrid** — Mon–Sun columns, 7am–10pm rows, 15-minute snap. Renders section blocks, busy blocks, drag ghost previews.
 - **BusyPainter** — drag on empty grid paints a busy block; click a busy block to delete it.
 - **CourseSearch** (sidebar) — department picker + text search; results grouped by course; sections expandable showing days/times, professor name, ★rating, top 2 tags.
 - **SectionCard** — draggable. Dropping on the calendar adds the section at its real meeting times (fixed by the university). Grid shows a ghost of where it lands; conflicts render a red ghost and the drop is rejected. Swapping = drop a different section of the same course.

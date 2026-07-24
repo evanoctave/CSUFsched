@@ -1,4 +1,4 @@
-export type Day = 'M' | 'Tu' | 'W' | 'Th' | 'F' | 'Sa'; // Sunday intentionally excluded — CSUF rarely schedules Sunday classes
+export type Day = 'M' | 'Tu' | 'W' | 'Th' | 'F' | 'Sa' | 'Su';
 
 export interface Meeting {
   days: Day[];

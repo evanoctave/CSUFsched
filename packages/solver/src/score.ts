@@ -35,7 +35,8 @@ export function avgProfRating(sections: Section[]): number {
 export function scoreCombo(sections: Section[], prefs: SolverPrefs): number {
   const ratingScore = (avgProfRating(sections) - 1) / 4;
   const gapScore = Math.max(0, 1 - totalGapMinutes(sections) / 480);
-  const dayScore = (6 - daysOnCampus(sections)) / 6;
+  // 7 = size of the Day union; keep in sync with @csufsched/types.
+  const dayScore = (7 - daysOnCampus(sections)) / 7;
   return (
     100 *
     (prefs.weightProfRating * ratingScore +
