@@ -107,8 +107,8 @@ export function parseClassRows(rows: RawClassRow[]): ParseResult {
           days,
           startMin,
           endMin,
-          building: row.building.trim() === '' ? null : row.building,
-          room: row.room.trim() === '' ? null : row.room,
+          building: row.building.trim() === '' ? null : row.building.trim(),
+          room: row.room.trim() === '' ? null : row.room.trim(),
         });
       }
     } catch (err) {
