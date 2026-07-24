@@ -8,3 +8,5 @@ export type {
 } from './types';
 export { rateLimited, fetchWithBackoff } from './rateLimit';
 export type { FetchLike, BackoffOptions } from './rateLimit';
+export { scrapeTerm } from './run';
+export type { ScrapeSummary, ScrapeTermOptions } from './run';
