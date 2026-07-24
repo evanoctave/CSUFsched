@@ -24,6 +24,18 @@ describe('sectionsConflict', () => {
     const a = mkSection([{ days: ['M'], startMin: 600, endMin: 650 }]);
     expect(sectionsConflict(online, a)).toBe(false);
   });
+
+  it('detects conflict between later meetings across sections', () => {
+    const a = mkSection([
+      { days: ['M'], startMin: 600, endMin: 650 },
+      { days: ['Th'], startMin: 900, endMin: 975 },
+    ]);
+    const b = mkSection([
+      { days: ['Tu'], startMin: 600, endMin: 650 },
+      { days: ['Th'], startMin: 930, endMin: 1005 },
+    ]);
+    expect(sectionsConflict(a, b)).toBe(true);
+  });
 });
 
 describe('sectionConflictsWithBlock', () => {

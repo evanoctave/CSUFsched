@@ -41,6 +41,12 @@ export function mkCourse(
 ): CourseWithSections {
   const [deptCode, catalogNbr] = label.split(' ');
   const id = nextId++;
-  for (const s of sections) s.courseId = id;
-  return { id, deptCode, catalogNbr, title: label, units, sections };
+  return {
+    id,
+    deptCode,
+    catalogNbr,
+    title: label,
+    units,
+    sections: sections.map((s) => ({ ...s, courseId: id })),
+  };
 }
