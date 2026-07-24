@@ -2,8 +2,7 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "jsx": "react-jsx",
-    "types": ["vite/client"]
+    "types": ["vite/client", "vitest/globals", "@testing-library/jest-dom"]
   },
-  "include": ["src", "tests", "e2e", "playwright.config.ts"],
-  "exclude": ["vite.config.ts"]
+  "include": ["src", "tests", "e2e", "vite.config.ts", "playwright.config.ts"]
 }
