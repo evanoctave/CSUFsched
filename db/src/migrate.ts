@@ -5,7 +5,10 @@ import type pg from 'pg';
 import { createPool } from './pool';
 
 export function orderMigrations(files: string[]): string[] {
-  return files.filter((f) => /^\d+_.+\.sql$/.test(f)).sort();
+  const prefix = (f: string) => Number(/^(\d+)/.exec(f)?.[1] ?? 0);
+  return files
+    .filter((f) => /^\d+_.+\.sql$/.test(f))
+    .sort((a, b) => prefix(a) - prefix(b) || a.localeCompare(b));
 }
 
 export async function runMigrations(pool: pg.Pool, dir: string): Promise<string[]> {
@@ -17,7 +20,7 @@ export async function runMigrations(pool: pg.Pool, dir: string): Promise<string[
   );
   const files = orderMigrations(await readdir(dir));
   const appliedRows = await pool.query('SELECT filename FROM schema_migrations');
-  const applied = new Set<string>(appliedRows.rows.map((r) => r.filename as string));
+  const applied = new Set<string>(appliedRows.rows.map((r) => r.filename));
   const ran: string[] = [];
   for (const file of files) {
     if (applied.has(file)) continue;
@@ -30,7 +33,7 @@ export async function runMigrations(pool: pg.Pool, dir: string): Promise<string[
       await client.query('COMMIT');
       ran.push(file);
     } catch (err) {
-      await client.query('ROLLBACK');
+      await client.query('ROLLBACK').catch(() => {});
       throw err;
     } finally {
       client.release();

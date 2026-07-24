@@ -15,4 +15,8 @@ describe('orderMigrations', () => {
       '001_a.sql',
     ]);
   });
+
+  it('sorts numerically, not lexicographically', () => {
+    expect(orderMigrations(['10_b.sql', '2_a.sql'])).toEqual(['2_a.sql', '10_b.sql']);
+  });
 });
