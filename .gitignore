@@ -142,3 +142,6 @@ vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
 .superpowers/
+
+# RMP reports
+scrapers/rmp/reports/*.json
