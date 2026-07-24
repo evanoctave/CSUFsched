@@ -48,6 +48,10 @@ describe('avgProfRating', () => {
     const unrated = mkSection([], { professor: null });
     expect(avgProfRating([rated, unrated])).toBe(4);
   });
+
+  it('returns neutral 3 for an empty section list', () => {
+    expect(avgProfRating([])).toBe(3);
+  });
 });
 
 describe('scoreCombo', () => {
@@ -61,5 +65,20 @@ describe('scoreCombo', () => {
       mkSection([{ days: ['W'], startMin: 900, endMin: 950 }], { professor: mkProf(1.5) }),
     ];
     expect(scoreCombo(good, prefs)).toBeGreaterThan(scoreCombo(bad, prefs));
+  });
+
+  it('computes exact score for a known schedule', () => {
+    // one M class, prof 5.0, no gaps: ratingScore 1, gapScore 1, dayScore 5/6
+    const combo = [mkSection([{ days: ['M'], startMin: 600, endMin: 650 }], { professor: mkProf(5) })];
+    expect(scoreCombo(combo, prefs)).toBeCloseTo(100 * (1 + 1 + 0.2 * (5 / 6)));
+  });
+
+  it('clamps gap score at 0 when gaps exceed 480 minutes', () => {
+    const combo = [
+      mkSection([{ days: ['M'], startMin: 480, endMin: 530 }], { professor: mkProf(3) }),
+      mkSection([{ days: ['M'], startMin: 1200, endMin: 1250 }], { professor: mkProf(3) }),
+    ];
+    // 670 min gap → gapScore 0; ratingScore 0.5; dayScore 5/6
+    expect(scoreCombo(combo, prefs)).toBeCloseTo(100 * (0.5 + 0 + 0.2 * (5 / 6)));
   });
 });
