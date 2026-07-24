@@ -1,0 +1,39 @@
+[
+  {
+    "id": "VGVhY2hlci0x",
+    "legacyId": 1,
+    "firstName": "John",
+    "lastName": "Lee",
+    "avgRating": 4.2,
+    "avgDifficulty": 2.1,
+    "wouldTakeAgainPercent": 78,
+    "numRatings": 55,
+    "teacherRatingTags": [
+      { "tagName": "Clear lectures", "tagCount": 12 },
+      { "tagName": "Low homework", "tagCount": 9 },
+      { "tagName": "Caring", "tagCount": 3 }
+    ]
+  },
+  {
+    "id": "VGVhY2hlci0y",
+    "legacyId": 2,
+    "firstName": "Jane",
+    "lastName": "Lee",
+    "avgRating": 3.1,
+    "avgDifficulty": 3.8,
+    "wouldTakeAgainPercent": -1,
+    "numRatings": 4,
+    "teacherRatingTags": []
+  },
+  {
+    "id": "VGVhY2hlci0z",
+    "legacyId": 3,
+    "firstName": "Kenji",
+    "lastName": "Ito",
+    "avgRating": null,
+    "avgDifficulty": null,
+    "wouldTakeAgainPercent": -1,
+    "numRatings": 0,
+    "teacherRatingTags": []
+  }
+]
