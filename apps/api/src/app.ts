@@ -92,5 +92,7 @@ export async function buildApp(queries: ApiQueries, opts: AppOptions): Promise<F
     return result;
   });
 
+  app.get('/api/meta', async () => queries.getMeta());
+
   return app;
 }

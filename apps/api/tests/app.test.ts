@@ -10,6 +10,7 @@ export function stubQueries(overrides: Partial<ApiQueries> = {}): ApiQueries {
     listCourses: async () => [],
     getProfessorDetail: async () => null,
     listSectionsByIds: async () => null,
+    getMeta: async () => ({ dataFrom: null }),
     ...overrides,
   };
 }
@@ -209,6 +210,18 @@ describe('GET /api/sections', () => {
       error: 'not_found',
       message: 'One or more sections not found',
     });
+  });
+});
+
+describe('GET /api/meta', () => {
+  it('returns dataFrom', async () => {
+    const app = await buildApp(
+      stubQueries({ getMeta: async () => ({ dataFrom: '2026-07-20T12:00:00.000Z' }) }),
+      OPTS,
+    );
+    const res = await app.inject({ method: 'GET', url: '/api/meta' });
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual({ dataFrom: '2026-07-20T12:00:00.000Z' });
   });
 });
 
