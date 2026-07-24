@@ -6,3 +6,5 @@ export type {
   ScrapedSection,
   ScrapedCourse,
 } from './types';
+export { rateLimited, fetchWithBackoff } from './rateLimit';
+export type { FetchLike, BackoffOptions } from './rateLimit';
