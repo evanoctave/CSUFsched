@@ -1,4 +1,5 @@
-export { parseDays, parseTime } from './parse';
+export { parseDays, parseTime, parseClassRows } from './parse';
+export type { ParseResult } from './parse';
 export type {
   RawClassRow,
   ScrapedMeeting,
