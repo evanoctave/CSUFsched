@@ -17,6 +17,7 @@ export function solve(input: SolverInput): SolverResult {
   const locked = new Set(lockedSectionIds);
 
   const filtered = courses.map((course) => {
+    // If multiple locked ids target one course, first match wins.
     const lockedSection = course.sections.find((s) => locked.has(s.id));
     if (lockedSection) {
       return { course, viable: [lockedSection], reasons: new Set<EliminationReason>() };
@@ -42,6 +43,7 @@ export function solve(input: SolverInput): SolverResult {
   const { combos, truncated, deepestIndex } = enumerateCombos(ordered.map((f) => f.viable));
 
   if (combos.length === 0) {
+    // deepestIndex >= 0 here: ordered and all viable lists are non-empty, so backtracking visits index 0.
     const blocked = ordered[Math.min(deepestIndex, ordered.length - 1)];
     return {
       candidates: [],

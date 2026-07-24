@@ -39,6 +39,7 @@ describe('solve', () => {
     const result = solve(input({ courses: [course] }));
     expect(result.candidates).toHaveLength(5);
     expect(result.totalValidCombos).toBe(7);
+    expect(result.truncated).toBe(false);
   });
 
   it('reports which course was eliminated by a busy block', () => {
