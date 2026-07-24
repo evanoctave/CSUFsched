@@ -65,5 +65,35 @@ export async function buildApp(queries: ApiQueries, opts: AppOptions): Promise<F
     return queries.listCourses(termId, dept, q ?? null);
   });
 
+  app.get('/api/professors/:id', async (req, reply) => {
+    const raw = (req.params as { id: string }).id;
+    const id = Number(raw);
+    const detail = Number.isInteger(id) ? await queries.getProfessorDetail(id) : null;
+    if (detail === null) {
+      return reply.status(404).send({ error: 'not_found', message: `Unknown professor ${raw}` });
+    }
+    return detail;
+  });
+
+  app.get('/api/sections', async (req, reply) => {
+    const raw = (req.query as { ids?: string }).ids;
+    // Number('') === 0, so blank segments must be mapped to NaN explicitly
+    const ids =
+      raw === undefined
+        ? []
+        : [...new Set(raw.split(',').map((s) => (s.trim() === '' ? NaN : Number(s))))];
+    if (raw === undefined || ids.length === 0 || ids.some((n) => !Number.isInteger(n))) {
+      return reply.status(400).send({
+        error: 'bad_request',
+        message: 'ids query parameter is required, e.g. ids=1,2,3',
+      });
+    }
+    const result = await queries.listSectionsByIds(ids);
+    if (result === null) {
+      return reply.status(404).send({ error: 'not_found', message: 'One or more sections not found' });
+    }
+    return result;
+  });
+
   return app;
 }

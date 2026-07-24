@@ -140,3 +140,88 @@ describe('error shape', () => {
     expect(res.json()).toEqual({ error: 'internal_error', message: 'db exploded' });
   });
 });
+
+describe('GET /api/professors/:id', () => {
+  const detail = {
+    id: 7,
+    fullName: 'Lee,J',
+    rating: 4.2,
+    difficulty: 2.1,
+    wouldTakeAgainPct: 78,
+    numRatings: 55,
+    rmpUrl: 'https://www.ratemyprofessors.com/professor/1',
+    tags: [{ tag: 'clear lectures', count: 12 }],
+  };
+
+  it('returns professor detail', async () => {
+    const app = await buildApp(stubQueries({ getProfessorDetail: async () => detail }), OPTS);
+    const res = await app.inject({ method: 'GET', url: '/api/professors/7' });
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual(detail);
+  });
+
+  it('404s for unknown or non-numeric ids', async () => {
+    const app = await buildApp(stubQueries({ getProfessorDetail: async () => null }), OPTS);
+    const missing = await app.inject({ method: 'GET', url: '/api/professors/999' });
+    expect(missing.statusCode).toBe(404);
+    expect(missing.json()).toEqual({ error: 'not_found', message: 'Unknown professor 999' });
+    const bad = await app.inject({ method: 'GET', url: '/api/professors/abc' });
+    expect(bad.statusCode).toBe(404);
+  });
+});
+
+describe('GET /api/sections', () => {
+  it('400s when ids is missing or malformed', async () => {
+    const app = await buildApp(stubQueries(), OPTS);
+    const missing = await app.inject({ method: 'GET', url: '/api/sections' });
+    expect(missing.statusCode).toBe(400);
+    expect(missing.json()).toEqual({
+      error: 'bad_request',
+      message: 'ids query parameter is required, e.g. ids=1,2,3',
+    });
+    const malformed = await app.inject({ method: 'GET', url: '/api/sections?ids=1,x,3' });
+    expect(malformed.statusCode).toBe(400);
+    const empty = await app.inject({ method: 'GET', url: '/api/sections?ids=' });
+    expect(empty.statusCode).toBe(400);
+  });
+
+  it('passes deduplicated numeric ids to the query layer', async () => {
+    let seen: number[] = [];
+    const app = await buildApp(
+      stubQueries({
+        listSectionsByIds: async (ids) => {
+          seen = ids;
+          return [];
+        },
+      }),
+      OPTS,
+    );
+    const res = await app.inject({ method: 'GET', url: '/api/sections?ids=3,1,3' });
+    expect(res.statusCode).toBe(200);
+    expect(seen).toEqual([3, 1]);
+  });
+
+  it('404s when any requested section is unknown', async () => {
+    const app = await buildApp(stubQueries({ listSectionsByIds: async () => null }), OPTS);
+    const res = await app.inject({ method: 'GET', url: '/api/sections?ids=1,2' });
+    expect(res.statusCode).toBe(404);
+    expect(res.json()).toEqual({
+      error: 'not_found',
+      message: 'One or more sections not found',
+    });
+  });
+});
+
+describe('rate limiting', () => {
+  it('429s with {error, message} beyond the limit', async () => {
+    const app = await buildApp(stubQueries(), { ...OPTS, rateLimitMax: 2 });
+    await app.inject({ method: 'GET', url: '/api/terms' });
+    await app.inject({ method: 'GET', url: '/api/terms' });
+    const res = await app.inject({ method: 'GET', url: '/api/terms' });
+    expect(res.statusCode).toBe(429);
+    expect(res.json()).toEqual({
+      error: 'rate_limited',
+      message: 'Too many requests, slow down',
+    });
+  });
+});
