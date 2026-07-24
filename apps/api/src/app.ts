@@ -1,4 +1,4 @@
-import Fastify, { type FastifyInstance } from 'fastify';
+import Fastify, { type FastifyInstance, type FastifyError } from 'fastify';
 import cors from '@fastify/cors';
 import rateLimit from '@fastify/rate-limit';
 import type { ApiQueries } from './queries';
@@ -15,10 +15,6 @@ export async function buildApp(queries: ApiQueries, opts: AppOptions): Promise<F
   await app.register(rateLimit, {
     max: opts.rateLimitMax ?? 100,
     timeWindow: '1 minute',
-    errorResponseBuilder: () => ({
-      error: 'rate_limited',
-      message: 'Too many requests, slow down',
-    }),
   });
 
   app.addHook('onSend', async (_req, reply) => {
@@ -31,12 +27,13 @@ export async function buildApp(queries: ApiQueries, opts: AppOptions): Promise<F
     void reply.status(404).send({ error: 'not_found', message: 'Route not found' });
   });
 
-  app.setErrorHandler((err: any, _req, reply) => {
-    const status = err?.statusCode ?? 500;
-    void reply.status(status).send({
-      error: status === 429 ? 'rate_limited' : 'internal_error',
-      message: err?.message ?? 'Unknown error',
-    });
+  app.setErrorHandler((err: FastifyError, _req, reply) => {
+    const status = err.statusCode ?? 500;
+    void reply.status(status).send(
+      status === 429
+        ? { error: 'rate_limited', message: 'Too many requests, slow down' }
+        : { error: 'internal_error', message: err.message },
+    );
   });
 
   app.get('/api/terms', async () => queries.listTerms());
