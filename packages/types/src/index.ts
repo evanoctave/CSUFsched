@@ -82,3 +82,26 @@ export interface SolverResult {
   totalValidCombos: number;
   truncated: boolean; // true if enumeration hit the combo cap
 }
+
+export interface TermSummary {
+  id: number;
+  code: string; // "2268"
+  name: string; // "Fall 2026"
+}
+
+export interface DepartmentSummary {
+  id: number;
+  code: string; // "CPSC"
+  name: string;
+}
+
+export interface ProfessorDetail {
+  id: number;
+  fullName: string;
+  rating: number | null;
+  difficulty: number | null;
+  wouldTakeAgainPct: number | null;
+  numRatings: number | null;
+  rmpUrl: string | null;
+  tags: Array<{ tag: string; count: number }>;
+}
