@@ -13,6 +13,7 @@ const DAY_MAP: Record<string, Day> = {
 export function parseDays(raw: string): Day[] {
   const trimmed = raw.trim();
   if (trimmed === '' || trimmed === 'TBA') return [];
+  if (trimmed.length % 2 !== 0) throw new Error(`unrecognized day string "${raw}" (odd length)`);
   const days: Day[] = [];
   for (let i = 0; i < trimmed.length; i += 2) {
     const token = trimmed.slice(i, i + 2);

@@ -15,6 +15,7 @@ describe('parseDays', () => {
 
   it('throws on unrecognized tokens', () => {
     expect(() => parseDays('MoXx')).toThrow(/unrecognized/i);
+    expect(() => parseDays('MoW')).toThrow(/unrecognized/i);
   });
 });
 
