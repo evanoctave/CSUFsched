@@ -20,6 +20,7 @@ export interface ApiQueries {
   listCourses(termId: number, deptCode: string, q: string | null): Promise<CourseWithSections[]>;
   getProfessorDetail(id: number): Promise<ProfessorDetail | null>;
   listSectionsByIds(ids: number[]): Promise<CourseWithSections[] | null>;
+  getMeta(): Promise<{ dataFrom: string | null }>;
 }
 
 const SECTION_SELECT = `
@@ -153,6 +154,12 @@ export function makeQueries(pool: pg.Pool): ApiQueries {
       );
       const { meetingRows, tagRows } = await fetchMeetingsAndTags(pool, sectionRows);
       return assembleCourses(courseRes.rows as CourseQueryRow[], sectionRows, meetingRows, tagRows);
+    },
+
+    async getMeta() {
+      const res = await pool.query('SELECT MAX(last_scraped_at) AS data_from FROM professors');
+      const raw = res.rows[0].data_from as Date | null;
+      return { dataFrom: raw === null ? null : raw.toISOString() };
     },
   };
 }

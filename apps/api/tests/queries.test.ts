@@ -164,4 +164,10 @@ describe.skipIf(!TEST_URL)('queries (integration)', () => {
 
     expect(await q.listSectionsByIds([cpsc121Sec02, 999999])).toBeNull();
   });
+
+  it('getMeta returns max professor scrape time', async () => {
+    await pool.query(`UPDATE professors SET last_scraped_at = '2026-07-20T12:00:00Z'`);
+    const meta = await q.getMeta();
+    expect(meta.dataFrom).toBe('2026-07-20T12:00:00.000Z');
+  });
 });
