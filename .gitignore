@@ -145,3 +145,7 @@ vite.config.ts.timestamp-*
 
 # RMP reports
 scrapers/rmp/reports/*.json
+
+# Playwright
+test-results/
+playwright-report/
