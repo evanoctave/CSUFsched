@@ -64,3 +64,18 @@ export interface Catalog {
   subjects: CatalogOption[];
   careers: CatalogOption[];
 }
+
+export interface PersistInput {
+  termCode: string;
+  termName: string;
+  departmentNames: Map<string, string>;
+  courses: ScrapedCourse[];
+}
+
+export interface PersistResult {
+  termId: number;
+  coursesUpserted: number;
+  sectionsUpserted: number;
+  coursesDeleted: number;
+  sectionsDeleted: number;
+}
