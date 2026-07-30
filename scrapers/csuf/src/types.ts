@@ -43,6 +43,11 @@ export interface ScrapedCourse {
   sections: ScrapedSection[];
 }
 
+export interface ResultRow {
+  rowIndex: number;
+  row: RawClassRow;
+}
+
 export interface SearchCriteria {
   termCode: string;
   subject: string;
