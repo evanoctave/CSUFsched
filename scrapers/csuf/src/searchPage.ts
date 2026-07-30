@@ -1,6 +1,7 @@
 import { buildSearchFields } from './forms.ts';
+import { parseResultRows } from './parseResults.ts';
 import type { PeopleSoftSession } from './session.ts';
-import type { SearchCriteria } from './types.ts';
+import type { ResultRow, SearchCriteria } from './types.ts';
 
 export const SEARCH_ACTION = 'CLASS_SRCH_WRK2_SSR_PB_CLASS_SRCH';
 export const WARNING_CONTINUE_ACTION = '#ICSave';
@@ -38,4 +39,27 @@ export async function runSearch(
 // Mandatory between searches: without it PeopleSoft replays the previous results.
 export async function resetSearch(session: PeopleSoftSession): Promise<void> {
   await session.post(NEW_SEARCH_ACTION);
+}
+
+export interface SearchOutcome {
+  rows: ResultRow[];
+  skipped: Array<{ rowIndex: number; error: string }>;
+}
+
+// Detail fetches return to the results page themselves, so the only extra
+// navigation is resetting the previous search before opening the next one.
+export function makeSearcher(
+  session: PeopleSoftSession,
+): (criteria: SearchCriteria) => Promise<SearchOutcome> {
+  let needsReset = false;
+  return async (criteria) => {
+    if (needsReset) await resetSearch(session);
+    // Assume the worst until runSearch says otherwise: a thrown search leaves
+    // the session on an unknown page, and skipping the reset makes PeopleSoft
+    // replay the previous result set into the next subject.
+    needsReset = true;
+    const html = await runSearch(session, criteria);
+    needsReset = html !== null;
+    return html === null ? { rows: [], skipped: [] } : parseResultRows(html);
+  };
 }

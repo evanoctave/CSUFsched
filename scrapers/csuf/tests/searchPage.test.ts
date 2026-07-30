@@ -5,6 +5,7 @@ import { describe, it, expect, vi } from 'vitest';
 import {
   runSearch,
   resetSearch,
+  makeSearcher,
   isWarningPage,
   isResultsPage,
   SEARCH_ACTION,
@@ -67,5 +68,51 @@ describe('resetSearch', () => {
     const post = vi.fn().mockResolvedValue('<PAGE id="SSR_CLSRCH_ENTRY"></PAGE>');
     await resetSearch({ post } as never);
     expect(post).toHaveBeenCalledWith(NEW_SEARCH_ACTION);
+  });
+});
+
+describe('makeSearcher', () => {
+  const actions = (post: ReturnType<typeof vi.fn>): string[] =>
+    post.mock.calls.map((c) => c[0] as string);
+
+  it('resets between two searches that both returned results, but not before the first', async () => {
+    const post = vi.fn().mockResolvedValue(results);
+    const search = makeSearcher({ post } as never);
+
+    const first = await search(criteria);
+    const second = await search({ ...criteria, subject: 'MATH' });
+
+    expect(first.rows.length).toBeGreaterThan(0);
+    expect(second.rows.length).toBeGreaterThan(0);
+    expect(actions(post)).toEqual([SEARCH_ACTION, NEW_SEARCH_ACTION, SEARCH_ACTION]);
+  });
+
+  it('reports the rows the HTML parser skipped', async () => {
+    const post = vi.fn().mockResolvedValue(results);
+    const outcome = await makeSearcher({ post } as never)(criteria);
+    expect(Array.isArray(outcome.skipped)).toBe(true);
+  });
+
+  it('does not reset after a search that matched nothing', async () => {
+    const post = vi.fn().mockResolvedValueOnce(noResults).mockResolvedValueOnce(results);
+    const search = makeSearcher({ post } as never);
+
+    expect(await search(criteria)).toEqual({ rows: [], skipped: [] });
+    await search({ ...criteria, subject: 'MATH' });
+
+    expect(actions(post)).toEqual([SEARCH_ACTION, SEARCH_ACTION]);
+  });
+
+  it('resets after a search that threw, since the session is on an unknown page', async () => {
+    const post = vi
+      .fn()
+      .mockResolvedValueOnce('<html>garbage</html>')
+      .mockResolvedValue(results);
+    const search = makeSearcher({ post } as never);
+
+    await expect(search(criteria)).rejects.toThrow(/unexpected page/i);
+    await search({ ...criteria, subject: 'MATH' });
+
+    expect(actions(post)).toEqual([SEARCH_ACTION, NEW_SEARCH_ACTION, SEARCH_ACTION]);
   });
 });
