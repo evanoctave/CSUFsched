@@ -12,6 +12,10 @@ import {
   replaceMeetings,
   upsertProfessor,
   replaceProfTags,
+  deleteCoursesNotIn,
+  deleteSectionsNotIn,
+  updateSectionStatuses,
+  countSectionsForTerm,
 } from '../src/upserts';
 
 const TEST_URL = process.env.TEST_DATABASE_URL;
@@ -101,5 +105,70 @@ describe.skipIf(!TEST_URL)('upserts (integration)', () => {
     const row = await pool.query('SELECT rating, rmp_id FROM professors WHERE id = $1', [id]);
     expect(row.rows[0].rating).toBeNull();
     expect(row.rows[0].rmp_id).toBeNull();
+  });
+});
+
+describe.skipIf(!TEST_URL)('transactional swap', () => {
+  it('keeps section ids stable across a re-scrape and prunes what vanished', async () => {
+    const pool = createPool(TEST_URL!);
+    try {
+      const termId = await upsertTerm(pool, { code: '2299', name: 'Test Term' });
+      const deptId = await upsertDepartment(pool, { code: 'ZTST', name: 'Test Dept' });
+      const courseId = await upsertCourse(pool, {
+        termId, deptId, catalogNbr: '101', title: 'Intro', units: 3, description: null,
+      });
+      const keptId = await upsertSection(pool, {
+        courseId, classNbr: '10001', sectionCode: '01',
+        instructorId: null, mode: 'in-person', enrollmentStatus: 'open',
+      });
+      const goneId = await upsertSection(pool, {
+        courseId, classNbr: '10002', sectionCode: '02',
+        instructorId: null, mode: 'in-person', enrollmentStatus: 'open',
+      });
+
+      const sameId = await upsertSection(pool, {
+        courseId, classNbr: '10001', sectionCode: '01',
+        instructorId: null, mode: 'in-person', enrollmentStatus: 'closed',
+      });
+      expect(sameId).toBe(keptId);
+
+      const deleted = await deleteSectionsNotIn(pool, termId, [keptId]);
+      expect(deleted).toBe(1);
+      const rows = await pool.query('SELECT id FROM sections WHERE id = $1', [goneId]);
+      expect(rows.rowCount).toBe(0);
+
+      expect(await countSectionsForTerm(pool, termId)).toBe(1);
+
+      const updated = await updateSectionStatuses(pool, termId, [
+        { classNbr: '10001', status: 'waitlist' },
+        { classNbr: 'nosuch', status: 'open' },
+      ]);
+      expect(updated).toBe(1);
+      const status = await pool.query('SELECT enrollment_status FROM sections WHERE id = $1', [keptId]);
+      expect(status.rows[0].enrollment_status).toBe('waitlist');
+
+      const coursesDeleted = await deleteCoursesNotIn(pool, termId, []);
+      expect(coursesDeleted).toBe(1);
+    } finally {
+      await pool.query('DELETE FROM terms WHERE code = $1', ['2299']);
+      await pool.query('DELETE FROM departments WHERE code = $1', ['ZTST']);
+      await pool.end();
+    }
+  });
+
+  it('rolls the whole swap back when one write fails', async () => {
+    const pool = createPool(TEST_URL!);
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      const termId = await upsertTerm(client, { code: '2298', name: 'Rollback Term' });
+      expect(termId).toBeGreaterThan(0);
+      await client.query('ROLLBACK');
+      const after = await pool.query('SELECT id FROM terms WHERE code = $1', ['2298']);
+      expect(after.rowCount).toBe(0);
+    } finally {
+      client.release();
+      await pool.end();
+    }
   });
 });

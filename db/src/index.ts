@@ -8,6 +8,10 @@ export {
   replaceMeetings,
   upsertProfessor,
   replaceProfTags,
+  countSectionsForTerm,
+  deleteSectionsNotIn,
+  deleteCoursesNotIn,
+  updateSectionStatuses,
 } from './upserts.ts';
 export type {
   TermRow,
@@ -16,4 +20,5 @@ export type {
   SectionRow,
   MeetingRow,
   ProfessorRow,
+  Queryable,
 } from './upserts.ts';
