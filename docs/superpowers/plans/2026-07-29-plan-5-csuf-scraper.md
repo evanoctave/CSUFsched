@@ -2727,6 +2727,24 @@ Expected: PASS. A failure here means CSUF changed markup — re-record fixtures 
 `npx pnpm --filter @csufsched/scraper-csuf record-fixtures` and fix the parser the fixture
 tests now flag.
 
+**Amendment applied during execution (commit `f32e1f1`)**
+
+The first live run failed twice, each time on a defect no fixture could have caught. Both
+were fixed with a regression test before the run went green (term 2267, 91 subjects,
+175 CPSC rows, units `"2"`).
+
+1. `fetchWithBackoff` threw on every non-ok response, including the 302 that CSUF answers
+   the entry URL with. `Session.fetchFollowingRedirects` fetches with `redirect: 'manual'`
+   specifically so it can carry the cookie jar across hops, but the backoff wrapper sits
+   underneath it and rejected the redirect first, so `openSession` never got an ICSID.
+   `fetchWithBackoff` now returns 3xx responses to its caller. This was a production bug,
+   not a test-only one: `cli.ts` composes the same two layers in the same order.
+
+2. CSUF labels unscheduled meetings `To Be Arranged`. The `NO_MEETING` set covered `''`,
+   `TBA` and `Asynchronous` but not that spelling, so four CPSC sections were being skipped
+   rather than stored with no meeting time. The recorded fixture is truncated to three
+   course groups and the TBA sections sort last, which is why the fixture suite was green.
+
 - [ ] **Step 3: Confirm it stays out of the default run**
 
 Run: `npx pnpm --filter @csufsched/scraper-csuf test`
