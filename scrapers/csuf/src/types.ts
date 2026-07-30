@@ -42,3 +42,9 @@ export interface ScrapedCourse {
   units: number;
   sections: ScrapedSection[];
 }
+
+export interface SearchCriteria {
+  termCode: string;
+  subject: string;
+  career: string;
+}
