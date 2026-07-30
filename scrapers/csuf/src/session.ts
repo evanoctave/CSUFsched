@@ -63,7 +63,6 @@ class Session implements PeopleSoftSession {
   async open(): Promise<void> {
     const res = await this.fetchFollowingRedirects(this.opts.baseUrl);
     const html = await res.text();
-    this.jar.ingest(res);
     const icsid = readHiddenField(html, 'ICSID');
     if (icsid === null) throw new Error('entry page carried no ICSID');
     this.icsid = icsid;
@@ -99,7 +98,6 @@ class Session implements PeopleSoftSession {
       },
     });
     const html = await res.text();
-    this.jar.ingest(res);
     const echoed = readHiddenField(html, 'ICStateNum');
     this.stateNum = echoed === null ? this.stateNum + 1 : Number(echoed);
     return html;
