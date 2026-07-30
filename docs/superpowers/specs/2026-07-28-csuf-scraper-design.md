@@ -25,17 +25,23 @@ The working entry point is:
 https://cmsweb.fullerton.edu/psc/CFULPRD/EMPLOYEE/SA/c/SA_LEARNER_SERVICES.CLASS_SEARCH.GBL?public=
 ```
 
-Three requests produce a full results page:
+Five actions produce and re-produce results pages within one session:
 
 1. **GET** the URL above. Yields a `CFULPRD-PSJSESSIONID` cookie, `ICSID` (a base64 token,
    constant for the session), and `ICStateNum=1`.
-2. **POST** the search with `ICAction=CLASS_SRCH_WRK2_SSR_PB_CLASS_SRCH` and `ICStateNum=1`.
-3. **POST** with `ICAction=#ICSave`, `ICSaveWarningFilter=1`, `ICStateNum=2` to clear the
-   "Your search will return over 50 classes, would you like to continue?" interstitial
-   (page id `SSR_SS_WARNING`). Returns page id `SSR_CLSRCH_RSLT`.
+2. **POST** the search with `ICAction=CLASS_SRCH_WRK2_SSR_PB_CLASS_SRCH`.
+3. **POST** with `ICAction=#ICSave`, `ICSaveWarningFilter=1` to clear the "Your search will
+   return over 50 classes, would you like to continue?" interstitial (page id
+   `SSR_SS_WARNING`). Returns page id `SSR_CLSRCH_RSLT`.
+4. **POST** `ICAction=CLASS_SRCH_WRK2_SSR_PB_BACK` ("View Search Results") to return to the
+   results page after a detail fetch. `DERIVED_REGFRM1_STEP3` does not work from a detail
+   page and wedges the session.
+5. **POST** `ICAction=CLASS_SRCH_WRK2_SSR_PB_NEW_SEARCH$3$` before the next search. Without
+   it, subsequent searches silently return the previous subject's results.
 
-`ICStateNum` increments on every POST; `ICSID` stays fixed for the session. A verification
-run for CPSC / Fall 2026 / Undergraduate returned 179 sections in ~1.5MB of HTML.
+`ICStateNum` increments on every POST and is echoed back as
+`id='ICStateNum' value='N'` on most responses; `ICSID` stays fixed for the session. A
+verification run for CPSC / Fall 2026 / Undergraduate returned 179 sections in ~1.5MB of HTML.
 
 PeopleSoft rejects searches with fewer than two criteria ("Specify additional selection
 criteria to narrow your search"), so every search sends subject plus a catalog-number floor.
@@ -147,8 +153,10 @@ A new `updateSectionStatuses(client, termId, updates)` performs a batched
    (default 0.9). A first run against an empty database passes.
 7. Persist inside a single transaction.
 
-At one request per second, a full run takes roughly 40 minutes. Rate limiting and retry
-come from the existing `rateLimited` and `fetchWithBackoff`.
+Each detail fetch needs a `BACK` that re-downloads the full results page, so the detail
+pass costs ~2,600 requests rather than ~1,300. At one request per second a full run takes
+roughly 1.5 hours. Rate limiting and retry come from the existing `rateLimited` and
+`fetchWithBackoff`.
 
 ### Persistence: upsert and prune
 
