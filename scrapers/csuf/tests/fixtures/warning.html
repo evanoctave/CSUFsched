@@ -1,0 +1,192 @@
+<?xml version='1.0' encoding='utf-8' ?>
+<PAGE id='SSR_CLSRCH_ENTRY'><GENSCRIPT id='script'><![CDATA[var oWin=window;
+ var oDoc = window.document;
+oWin.strCurrUrl='https://cmsweb.fullerton.edu/psc/CFULPRD/EMPLOYEE/SA/c/SA_LEARNER_SERVICES.CLASS_SEARCH.GBL?public=&PAGE=SSR_CLSRCH_ENTRY';
+oWin.strReqURL='';
+bPTActEnterKey = true;
+]]></GENSCRIPT><GENSCRIPT id='onloadScript'><![CDATA[var pt_pageinfo = document.getElementById('pt_pageinfo_win0');
+if (pt_pageinfo) {
+pt_pageinfo.setAttribute('Page', 'SSR_SS_WARNING');
+pt_pageinfo.setAttribute('Component', 'CLASS_SEARCH');
+pt_pageinfo.setAttribute('Menu', 'SA_LEARNER_SERVICES');
+pt_pageinfo.setAttribute('Mode', 'CLASSIC');
+}
+
+ g_bAccessibilityMode=false;
+var actn='';
+var oWin=window;
+var oDoc=document;
+actn=oDoc.win0.ICAction.value;
+oDoc.win0.ICAction.value='None';
+oDoc.win0.ICResubmit.value='0';
+oWin.nResubmit='0';
+oDoc.win0.ICStateNum.value=2;initVars_win0();
+if (typeof resetVars_win0 == "function")resetVars_win0();
+oDoc.win0.ICFocus.value='';
+setupTimeout2();
+if (!isCrossDomainTop()) top.document.title=document.title;
+ptEvent.add(window,'scroll',positionWAIT_win0);
+ptCommonObj2.generateABNSearchResults(document.win0);
+getGblSrchPageNum(actn);
+if (gSrchRsltPageNum <= 5) getAllRelatedActions();
+
+if (typeof(myAppsWindowOpenJS) != 'undefined' && myAppsWindowOpenJS != null && myAppsWindowOpenJS != '')
+ {
+try {eval(myAppsWindowOpenJS);} catch(e) {}
+  myAppsWindowOpenJS=null;
+}
+if (typeof(HelppopupObj_win0) != 'undefined' && HelppopupObj_win0 != null)
+ HelppopupObj_win0.StopPopup('win0');
+if (typeof(ptLongEditCounter) != 'undefined' && ptLongEditCounter != null)
+   ptLongEditCounter.onLoadLongEditCounter();
+
+doModalOnLoad_win0(false, false, true);
+ResetGlyph_win0();
+self.scroll(0,0);
+if (typeof ptGridObj_win0 != 'undefined' && ptGridObj_win0)
+ ptGridObj_win0.clearGridArr();
+objToBeFocus = null;
+if (bPTDrag) CancelDragAccessible();
+ bPTDrag = false;
+if (typeof oWin == 'undefined') setEventHandlers_win0('ICFirstAnchor_win0', 'ICLastAnchor_win0', false);
+ else
+ oWin.setEventHandlers_win0('ICFirstAnchor_win0', 'ICLastAnchor_win0', false);
+ptLoadingStatus_empty(0);
+setupTimeout2();
+processing_win0(0,3000);]]></GENSCRIPT>
+<FIELD id='win0divPSHIDDENFIELDS'><![CDATA[<input type='hidden' name='ICType' id='ICType' value='Panel' />
+<input type='hidden' name='ICElementNum' id='ICElementNum' value='0' />
+<input type='hidden' name='ICStateNum' id='ICStateNum' value='2' />
+<input type='hidden' name='ICAction' id='ICAction' value='None' />
+<input type='hidden' name='ICModelCancel' id='ICModelCancel' value='0' />
+<input type='hidden' name='ICXPos' id='ICXPos' value='0' />
+<input type='hidden' name='ICYPos' id='ICYPos' value='0' />
+<input type='hidden' name='ResponsetoDiffFrame' id='ResponsetoDiffFrame' value='-1' />
+<input type='hidden' name='TargetFrameName' id='TargetFrameName' value='None' />
+<input type='hidden' name='FacetPath' id='FacetPath' value='None' />
+<input type='hidden' name='ICFocus' id='ICFocus' value='' />
+<input type='hidden' name='ICSaveWarningFilter' id='ICSaveWarningFilter' value='0' />
+<input type='hidden' name='ICChanged' id='ICChanged' value='-1' />
+<input type='hidden' name='ICSkipPending' id='ICSkipPending' value='0' />
+<input type='hidden' name='ICAutoSave' id='ICAutoSave' value='0' />
+<input type='hidden' name='ICResubmit' id='ICResubmit' value='0' />
+<input type='hidden' name='ICSID' id='ICSID' value='qdUK+dsEIa+JkUeUJy3IHazmQ5TN2+INDg8yvOlfFGs=' />
+<input type='hidden' name='ICActionPrompt' id='ICActionPrompt' value='false' />
+<input type='hidden' name='ICBcDomData' id='ICBcDomData' value='' />
+<input type='hidden' name='ICPanelName' id='ICPanelName' value='' />
+<input type='hidden' name='ICFind' id='ICFind' value='' />
+<input type='hidden' name='ICAddCount' id='ICAddCount' value='' />
+<input type='hidden' name='ICAppClsData' id='ICAppClsData' value='' />
+]]></FIELD>
+<FIELD id='win0divPAGEBAR'><![CDATA[]]></FIELD>
+<FIELD id='win0divPSPANELTABS'><![CDATA[]]></FIELD>
+<FIELD id='win0divPAGECONTAINER'><![CDATA[<H1  class='PSSRCHTITLE' ><span id='app_label'>Student SS Warning</span></H1>
+<DIV class='ps_pspagecontainer' id='win0divPSPAGECONTAINER'><table role='presentation'  border='0' id='ACE_width' cellpadding='0' cellspacing='0' class='PSPAGECONTAINER' cols='7' width='747'>
+<tr>
+<td width='5' height='10'></td>
+<td width='3'></td>
+<td width='1'></td>
+<td width='2'></td>
+<td width='73'></td>
+<td width='589'></td>
+<td width='73'></td>
+</tr>
+<tr>
+<td height='24' colspan='4'></td>
+<td colspan='3'  valign='top' align='left'>
+<DIV    id='win0divDERIVED_SSE_DSP_SS_TRANSACT_TITLE'><span role='heading' aria-level='1' class = 'PATRANSACTIONTITLE'id='DERIVED_SSE_DSP_SS_TRANSACT_TITLE' >Search for Classes</span>
+</DIV></td>
+</tr>
+<tr>
+<td height='21' colspan='2'></td>
+<td colspan='5'  valign='top' align='left'>
+<DIV    id='win0divDERIVED_SSE_DSP_TITLE1'><span  class='PAPAGETITLE' id='DERIVED_SSE_DSP_TITLE1' >&nbsp;</span>
+</DIV></td>
+</tr>
+<tr>
+<td height='12' colspan='3'></td>
+<td colspan='2'  valign='top' align='left'>
+<DIV    id='win0divDERIVED_SSE_DSP_'><table cellpadding='2' cellspacing='0' cols='1'  class='PAGROUPBOXLABELINVISIBLEWBO'  width='73'>
+<tr><td class='PAGROUPBOXLABELINVISIBLE'  align='left'>Group Box</td></tr>
+<tr><td width='70' height='-4'>
+</td></tr>
+</table>
+</DIV></td>
+</tr>
+<tr>
+<td height='4' colspan='7'></td>
+</tr>
+<tr>
+<td height='61'></td>
+<td colspan='5'  valign='top' align='left'>
+<DIV    id='win0divDERIVED_SSE_DSP_$26$'><table cellpadding='2' cellspacing='0' cols='1'  class='PSGROUPBOXWBO'  width='648'>
+<tr><td class='PAGROUPBOXLABELINVISIBLE'  align='left'>Group Box</td></tr>
+<tr><td width='644'>
+<table role='presentation'  border='0' id='ACE_DERIVED_SSE_DSP_$26$' cellpadding='0' cellspacing='0' cols='3' width='663' class='PSGROUPBOX PTCPGROUPBOXWBO' style='border-style:none' >
+<tr>
+<td width='7' height='0'></td>
+<td width='649'></td>
+<td width='6'></td>
+</tr>
+<tr>
+<td height='41'></td>
+<td  valign='top' align='left'>
+<DIV    id='win0divDERIVED_SSE_DSP_$27$'><table cellpadding='2' cellspacing='0' cols='1'  class='PAGROUPBOXLABELINVISIBLEWBO'  width='629'>
+<tr><td class='PAGROUPBOXLABELINVISIBLE'  align='left'>Group Box</td></tr>
+<tr><td width='626'>
+<table role='presentation'  border='0' id='ACE_DERIVED_SSE_DSP_$27$' cellpadding='0' cellspacing='0' cols='3' width='645' class='PAGROUPBOXLABELINVISIBLE PTCPGROUPBOXWBO' style='border-style:none' >
+<tr>
+<td width='3' height='0'></td>
+<td width='41'></td>
+<td width='600'></td>
+</tr>
+<tr>
+<td height='6'></td>
+<td rowspan='2' nowrap='nowrap'  valign='top' align='left'>
+<DIV    id='win0divDERIVED_SSE_DSP_SSR_MSG_PB'><img src='/cs/CFULPRD/86011/PS_DELETE_QUESTION_IMG_1.gif' id='DERIVED_SSE_DSP_SSR_MSG_PB$IMG'  alt='Message' title='Message' border='0' /></DIV></td>
+</tr>
+<tr>
+<td height='29'></td>
+<td  valign='top' align='left'>
+<DIV    id='win0divDERIVED_SSE_DSP_SSR_MSG_TEXT'><span  class='PSLONGEDITBOX' style='word-wrap:break-word;overflow:hidden;display:block; width:584px;  overflow:auto;' id='DERIVED_SSE_DSP_SSR_MSG_TEXT' >Your search will return over 50 classes, would you like to continue?</span>
+</DIV></td>
+</tr>
+</table>
+</td></tr>
+</table>
+</DIV></td>
+</tr>
+<tr>
+<td height='6' colspan='3'></td>
+</tr>
+</table>
+</td></tr>
+</table>
+</DIV></td>
+</tr>
+<tr>
+<td height='9' colspan='7'></td>
+</tr>
+</table>
+</DIV>
+<DIV class='' id='win0divPSTOOLBAR'><span style='margin: 5px'><a class='PSPUSHBUTTON Left PSPRIMARY' role='presentation' onclick='javascript:if(event.target.id == this.firstChild.firstChild.id) { return true; } else return((this.firstChild &amp;&amp; this.firstChild.firstChild) != null ? this.firstChild.firstChild.click() : false);'><span style='background-Color: transparent;border:0;'><input type='button' id='#ICSave' name='#ICSave'  class='PSPUSHBUTTONTBOK PSPRIMARY'   value='OK' onclick="javascript:submitAction_win0(document.win0, '#ICSave');" tabindex='12'/> </span></a><a class='PSPUSHBUTTON Left' role='presentation' onclick='javascript:if(event.target.id == this.firstChild.firstChild.id) { return true; } else return((this.firstChild &amp;&amp; this.firstChild.firstChild) != null ? this.firstChild.firstChild.click() : false);'><span style='background-Color: transparent;border:0;'><input type='button' id='#ICCancel' name='#ICCancel'  class='PSPUSHBUTTONTBCANCEL'   value='Cancel' onclick="javascript:submitAction_win0(document.win0, '#ICCancel');" tabindex='13'/> </span></a></span></DIV>
+]]></FIELD>
+<FIELD id='win0divPSPANELTABLINKS'><![CDATA[]]></FIELD>
+<SYSVAR id='sysvar'><![CDATA[nMaxSavedStates=5;
+sHistURL="https://cmsweb.fullerton.edu/psc/CFULPRD/EMPLOYEE/SA/c/SA_LEARNER_SERVICES.CLASS_SEARCH.GBL?page=SSR_SS_WARNING&public=";
+bCloseModal = false;
+bICList = false;
+bHtml5Doc = true;
+bClearBackState=false;
+bPageTransfered=false;
+bTransferAnimate=false;
+AddToHistory('Criteria Entry', '', 'returntolastpage@0', 'SSR_CLSRCH_ENTRY', 2, 0, 1, 0,'', 1, '', 0);
+corsHistoryTansaction();
+bCleanHtml = true;
+bDefer = true;
+document.hiddenFldArr_win0 =new Array('ICType','ICElementNum','ICStateNum','ICAction','ICModelCancel','ICXPos','ICYPos','ResponsetoDiffFrame','TargetFrameName','FacetPath','ICFocus','ICSaveWarningFilter','ICChanged','ICSkipPending','ICAutoSave','ICResubmit','ICSID','ICActionPrompt','ICBcDomData','ICPanelName','ICFind','ICAddCount','ICAppClsData');
+document.chgFldArr_win0 = new Array();
+bCDATA = false;
+bAccessibleLayout = false;
+bGenDomInfo = false;
+]]></SYSVAR></PAGE>

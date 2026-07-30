@@ -1,0 +1,117 @@
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { openSession, DEFAULT_BASE_URL } from '../src/session.ts';
+import { buildSearchFields } from '../src/forms.ts';
+import { rateLimited, fetchWithBackoff } from '../src/rateLimit.ts';
+
+const OUT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'tests', 'fixtures');
+const SEARCH = 'CLASS_SRCH_WRK2_SSR_PB_CLASS_SRCH';
+const CONTINUE = '#ICSave';
+const NEW_SEARCH = 'CLASS_SRCH_WRK2_SSR_PB_NEW_SEARCH$3$';
+const BACK = 'CLASS_SRCH_WRK2_SSR_PB_BACK';
+
+function trimToGroups(html: string, groups: number): string {
+  const marker = /title='Collapse section /g;
+  let cut = -1;
+  for (let i = 0; i <= groups; i += 1) {
+    const m = marker.exec(html);
+    if (m === null) return html;
+    cut = m.index;
+  }
+  return `${html.slice(0, cut)}\n<!-- fixture truncated after ${groups} course groups -->\n`;
+}
+
+/**
+ * Node's built-in fetch does not forward cookies collected on intermediate
+ * redirect hops.  PeopleSoft sets AWSALB + PSJSESSIONID on the first 302
+ * response; if those are dropped the second GET lands on the login page
+ * instead of the public class-search page.  This wrapper follows redirects
+ * manually so every Set-Cookie header is merged into the next request.
+ */
+async function fetchWithCookieRedirects(
+  url: string,
+  init?: RequestInit,
+): Promise<Response> {
+  const cookieMap = new Map<string, string>();
+
+  // Seed from any cookies already in the init headers so we don't clobber them.
+  const initCookie = (init?.headers as Record<string, string> | undefined)?.cookie ?? '';
+  for (const pair of initCookie.split(';').map((s) => s.trim()).filter(Boolean)) {
+    const eq = pair.indexOf('=');
+    if (eq > 0) cookieMap.set(pair.slice(0, eq), pair.slice(eq + 1));
+  }
+
+  let currentUrl = url;
+  const MAX_REDIRECTS = 10;
+
+  for (let hop = 0; hop < MAX_REDIRECTS; hop += 1) {
+    const cookieHeader = [...cookieMap].map(([k, v]) => `${k}=${v}`).join('; ');
+    const response = await fetch(currentUrl, {
+      ...init,
+      headers: {
+        ...(init?.headers as Record<string, string> | undefined),
+        ...(cookieHeader ? { cookie: cookieHeader } : {}),
+      },
+      redirect: 'manual',
+    });
+
+    // Ingest any cookies from this response.
+    for (const raw of response.headers.getSetCookie()) {
+      const pair = raw.split(';', 1)[0];
+      const eq = pair.indexOf('=');
+      if (eq > 0) cookieMap.set(pair.slice(0, eq).trim(), pair.slice(eq + 1).trim());
+    }
+
+    const isRedirect = response.status >= 300 && response.status < 400;
+    if (!isRedirect) return response;
+
+    const location = response.headers.get('location');
+    if (!location) return response;
+    currentUrl = location;
+  }
+
+  throw new Error(`Too many redirects from ${url}`);
+}
+
+const limited = rateLimited(
+  (url: string, init?: RequestInit) =>
+    fetchWithBackoff(url, fetchWithCookieRedirects, { retries: 3, baseDelayMs: 1000 }, init),
+  1000,
+);
+
+const run = async (): Promise<void> => {
+  await fs.mkdir(OUT, { recursive: true });
+  const session = await openSession({ baseUrl: DEFAULT_BASE_URL, fetchFn: limited });
+  await fs.writeFile(path.join(OUT, 'entry.html'), session.entryHtml);
+
+  const termCode = process.env.FIXTURE_TERM ?? '2267';
+
+  const warning = await session.post(SEARCH, buildSearchFields({ termCode, subject: 'CPSC', career: 'UGRD' }));
+  await fs.writeFile(path.join(OUT, 'warning.html'), warning);
+
+  const cpsc = await session.post(CONTINUE, { ICSaveWarningFilter: '1' });
+  await fs.writeFile(path.join(OUT, 'results-cpsc.html'), trimToGroups(cpsc, 3));
+
+  const detail = await session.post('MTG_CLASS_NBR$0');
+  await fs.writeFile(path.join(OUT, 'detail.html'), detail);
+  await session.post(BACK);
+
+  await session.post(NEW_SEARCH);
+  const histWarning = await session.post(SEARCH, buildSearchFields({ termCode, subject: 'HIST', career: 'UGRD' }));
+  const hist = histWarning.includes('SSR_SS_WARNING')
+    ? await session.post(CONTINUE, { ICSaveWarningFilter: '1' })
+    : histWarning;
+  await fs.writeFile(path.join(OUT, 'results-online.html'), trimToGroups(hist, 2));
+
+  await session.post(NEW_SEARCH);
+  const empty = await session.post(SEARCH, buildSearchFields({ termCode, subject: 'AFAM', career: 'EXED' }));
+  await fs.writeFile(path.join(OUT, 'no-results.html'), empty);
+
+  console.log(`fixtures written to ${OUT}`);
+};
+
+run().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});

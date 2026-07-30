@@ -1,0 +1,806 @@
+<?xml version='1.0' encoding='utf-8' ?>
+<PAGE id='SSR_CLSRCH_DTL'><GENSCRIPT id='script'><![CDATA[var oWin=window;
+ var oDoc = window.document;
+oWin.strCurrUrl='https://cmsweb.fullerton.edu/psc/CFULPRD/EMPLOYEE/SA/c/SA_LEARNER_SERVICES.CLASS_SEARCH.GBL?public=&PAGE=SSR_CLSRCH_DTL';
+oWin.strReqURL='';
+bPTActEnterKey = false;
+]]></GENSCRIPT><GENSCRIPT id='script'><![CDATA[oWin.gridRowSelRgbColor_win0 ='rgb(238,238,238)';
+]]></GENSCRIPT><GENSCRIPT id='onloadScript'><![CDATA[var pt_pageinfo = document.getElementById('pt_pageinfo_win0');
+if (pt_pageinfo) {
+pt_pageinfo.setAttribute('Page', 'SSR_CLSRCH_DTL');
+pt_pageinfo.setAttribute('Component', 'CLASS_SEARCH');
+pt_pageinfo.setAttribute('Menu', 'SA_LEARNER_SERVICES');
+pt_pageinfo.setAttribute('Mode', 'CLASSIC');
+}
+
+ g_bAccessibilityMode=false;
+var actn='';
+var oWin=window;
+var oDoc=document;
+actn=oDoc.win0.ICAction.value;
+oDoc.win0.ICAction.value='None';
+oDoc.win0.ICResubmit.value='0';
+oWin.nResubmit='0';
+oDoc.win0.ICStateNum.value=4;initVars_win0();
+if (typeof resetVars_win0 == "function")resetVars_win0();
+oDoc.win0.ICFocus.value='';
+setupTimeout2();
+if (!isCrossDomainTop()) top.document.title=document.title;
+ptEvent.add(window,'scroll',positionWAIT_win0);
+ptCommonObj2.generateABNSearchResults(document.win0);
+getGblSrchPageNum(actn);
+if (gSrchRsltPageNum <= 5) getAllRelatedActions();
+
+if (typeof(myAppsWindowOpenJS) != 'undefined' && myAppsWindowOpenJS != null && myAppsWindowOpenJS != '')
+ {
+try {eval(myAppsWindowOpenJS);} catch(e) {}
+  myAppsWindowOpenJS=null;
+}
+if (typeof(HelppopupObj_win0) != 'undefined' && HelppopupObj_win0 != null)
+ HelppopupObj_win0.StopPopup('win0');
+if (typeof(ptLongEditCounter) != 'undefined' && ptLongEditCounter != null)
+   ptLongEditCounter.onLoadLongEditCounter();
+ResetGlyph_win0();
+self.scroll(0,0);
+if (typeof ptGridObj_win0 != 'undefined' && ptGridObj_win0)
+ ptGridObj_win0.clearGridArr();
+objToBeFocus = null;
+if (bPTDrag) CancelDragAccessible();
+ bPTDrag = false;
+if (typeof oWin == 'undefined') setEventHandlers_win0('ICFirstAnchor_win0', 'ICLastAnchor_win0', false);
+ else
+ oWin.setEventHandlers_win0('ICFirstAnchor_win0', 'ICLastAnchor_win0', false);
+setFocus_win0('DERIVED_SSTSNAV_SSTS_NAV_TABS_DIS',-1);
+ptLoadingStatus_empty(0);
+setupTimeout2();
+processing_win0(0,3000);]]></GENSCRIPT>
+<FIELD id='win0divPSHIDDENFIELDS'><![CDATA[<input type='hidden' name='ICType' id='ICType' value='Panel' />
+<input type='hidden' name='ICElementNum' id='ICElementNum' value='0' />
+<input type='hidden' name='ICStateNum' id='ICStateNum' value='4' />
+<input type='hidden' name='ICAction' id='ICAction' value='None' />
+<input type='hidden' name='ICModelCancel' id='ICModelCancel' value='0' />
+<input type='hidden' name='ICXPos' id='ICXPos' value='0' />
+<input type='hidden' name='ICYPos' id='ICYPos' value='0' />
+<input type='hidden' name='ResponsetoDiffFrame' id='ResponsetoDiffFrame' value='-1' />
+<input type='hidden' name='TargetFrameName' id='TargetFrameName' value='None' />
+<input type='hidden' name='FacetPath' id='FacetPath' value='None' />
+<input type='hidden' name='ICFocus' id='ICFocus' value='' />
+<input type='hidden' name='ICSaveWarningFilter' id='ICSaveWarningFilter' value='0' />
+<input type='hidden' name='ICChanged' id='ICChanged' value='-1' />
+<input type='hidden' name='ICSkipPending' id='ICSkipPending' value='0' />
+<input type='hidden' name='ICAutoSave' id='ICAutoSave' value='0' />
+<input type='hidden' name='ICResubmit' id='ICResubmit' value='0' />
+<input type='hidden' name='ICSID' id='ICSID' value='qdUK+dsEIa+JkUeUJy3IHazmQ5TN2+INDg8yvOlfFGs=' />
+<input type='hidden' name='ICActionPrompt' id='ICActionPrompt' value='false' />
+<input type='hidden' name='ICBcDomData' id='ICBcDomData' value='' />
+<input type='hidden' name='ICPanelName' id='ICPanelName' value='' />
+<input type='hidden' name='ICFind' id='ICFind' value='' />
+<input type='hidden' name='ICAddCount' id='ICAddCount' value='' />
+<input type='hidden' name='ICAppClsData' id='ICAppClsData' value='' />
+]]></FIELD>
+<FIELD id='win0divPAGEBAR'><![CDATA[]]></FIELD>
+<FIELD id='win0divPSPANELTABS'><![CDATA[]]></FIELD>
+<FIELD id='win0divPAGECONTAINER'><![CDATA[<table class='PSPAGECONTAINER' role='main' aria-labelledby='app_label'><tr><td>
+<DIV class='ps_pspagecontainer' id='win0divPSPAGECONTAINER'><table role='presentation'  border='0' id='ACE_width' cellpadding='0' cellspacing='0' class='PSPAGECONTAINER' cols='17' width='1180'>
+<tr>
+<td width='0' height='3'></td>
+<td width='10'></td>
+<td width='6'></td>
+<td width='5'></td>
+<td width='198'></td>
+<td width='297'></td>
+<td width='130'></td>
+<td width='46'></td>
+<td width='85'></td>
+<td width='40'></td>
+<td width='20'></td>
+<td width='198'></td>
+<td width='5'></td>
+<td width='2'></td>
+<td width='5'></td>
+<td width='110'></td>
+<td width='17'></td>
+</tr>
+<tr>
+<td height='163'></td>
+<td colspan='9'  valign='top' align='left'>
+<DIV    id='win0divDERIVED_CLSRCH_GROUPBOX1'><table cellpadding='2' cellspacing='0' cols='1'  class='PABACKGROUNDINVISIBLEWBO'  width='795'>
+<tr><td width='793'>
+<table role='presentation'  border='0' id='ACE_DERIVED_CLSRCH_GROUPBOX1' cellpadding='0' cellspacing='0' cols='3' width='816' class='PABACKGROUNDINVISIBLE PTCPGROUPBOXWBO' style='border-style:none' >
+<tr>
+<td width='3' height='0'></td>
+<td width='800'></td>
+<td width='12'></td>
+</tr>
+<tr>
+<td height='149'></td>
+<td  valign='top' align='left'>
+<DIV    id='win0divDERIVED_REGFRM1_GROUP_BOX'><table cellpadding='2' cellspacing='0' cols='1'  class='PABACKGROUNDINVISIBLEWBO'  width='776'>
+<tr><td width='773'>
+<table role='presentation'  border='0' id='ACE_DERIVED_REGFRM1_GROUP_BOX' cellpadding='0' cellspacing='0' cols='4' width='796' class='PABACKGROUNDINVISIBLE PTCPGROUPBOXWBO' style='border-style:none' >
+<tr>
+<td width='3' height='0'></td>
+<td width='11'></td>
+<td width='553'></td>
+<td width='227'></td>
+</tr>
+<tr>
+<td height='121'></td>
+<td colspan='3'  valign='top' align='left'>
+<DIV    id='win0divDERIVED_SSTSNAV_GROUP_BOX'><table cellpadding='2' cellspacing='0' cols='1'  class='PABACKGROUNDINVISIBLEWBO'  width='785'>
+<tr><td width='783'>
+<table role='presentation'  border='0' id='ACE_DERIVED_SSTSNAV_GROUP_BOX' cellpadding='0' cellspacing='0' cols='6' width='806' class='PABACKGROUNDINVISIBLE PTCPGROUPBOXWBO' style='border-style:none' >
+<tr>
+<td width='8' height='0'></td>
+<td width='2'></td>
+<td width='285'></td>
+<td width='441'></td>
+<td width='30'></td>
+<td width='37'></td>
+</tr>
+<tr>
+<td height='19' colspan='2'></td>
+<td colspan='4'  valign='top' align='left'>
+<DIV    id='win0divDERIVED_SSTSNAV_PERSON_NAME'><span  class='PALEVEL0PRIMARY' id='DERIVED_SSTSNAV_PERSON_NAME' >&nbsp;</span>
+</DIV></td>
+</tr>
+<tr>
+<td height='11' colspan='3'></td>
+<td colspan='3'  valign='top' align='left'>
+<DIV    id='win0divCSU_DA_PB_WK_EMPLID'><span  class='PSEDITBOX_DISPONLY' id='CSU_DA_PB_WK_EMPLID' >&nbsp;</span>
+</DIV></td>
+</tr>
+<tr>
+<td height='24'></td>
+<td colspan='4'  valign='top' align='left'>
+<DIV    id='win0divDERIVED_SSTSNAV_SSTS_NAV_TABS_DIS'><div  style="width:791px; " >
+<!-- Begin HTML Area Name Undisclosed -->
+
+<!-- End HTML Area -->
+</div>
+</DIV></td>
+</tr>
+<tr>
+<td height='28'></td>
+<td colspan='4'  valign='top' align='left'>
+<DIV    id='win0divDERIVED_SSTSNAV_SSTS_NAV_STABS_DIS'><div  style="width:791px; " >
+<!-- Begin HTML Area Name Undisclosed -->
+
+<!-- End HTML Area -->
+</div>
+</DIV></td>
+</tr>
+<tr>
+<td height='11' colspan='2'></td>
+<td colspan='2' rowspan='2'  valign='top' align='left'>
+<DIV    id='win0divDERIVED_REGFRM1_SS_TRANSACT_TITLE'><span role='heading' aria-level='1' class = 'PATRANSACTIONTITLE'id='DERIVED_REGFRM1_SS_TRANSACT_TITLE' >Search for Classes</span>
+</DIV></td>
+</tr>
+<tr>
+<td height='23' colspan='2'></td>
+<td colspan='2' nowrap='nowrap'  valign='top' align='left'>
+<DIV    id='win0divDERIVED_REGFRM1_STEP3'><a name='DERIVED_REGFRM1_STEP3' id='DERIVED_REGFRM1_STEP3' tabindex='29' onclick='javascript:cancelBubble(event);' href="javascript:submitAction_win0(document.win0,'DERIVED_REGFRM1_STEP3');"><img src='/cs/CFULPRD/86011/PS_CS_STEP03_DIS_ICN_1.gif' id='DERIVED_REGFRM1_STEP3$IMG'  alt='Step 3' title='Step 3' border='0' /></a></DIV></td>
+</tr>
+</table>
+</td></tr>
+</table>
+</DIV></td>
+</tr>
+<tr>
+<td height='7' colspan='4'></td>
+</tr>
+<tr>
+<td height='7' colspan='2'></td>
+<td rowspan='2'  valign='top' align='left'>
+<DIV    id='win0divDERIVED_REGFRM1_TITLE1'><span  class='PAPAGETITLE' id='DERIVED_REGFRM1_TITLE1' >Class Detail</span>
+</DIV></td>
+</tr>
+<tr>
+<td height='13' colspan='2'></td>
+<td  valign='top' align='left'>
+<DIV    id='win0divCSU_DA_UI_WK_EMPLID'><span  class='PSEDITBOX_DISPONLY' id='CSU_DA_UI_WK_EMPLID' >&nbsp;</span>
+</DIV></td>
+</tr>
+</table>
+</td></tr>
+</table>
+</DIV></td>
+</tr>
+<tr>
+<td height='9' colspan='3'></td>
+</tr>
+</table>
+</td></tr>
+</table>
+</DIV></td>
+</tr>
+<tr>
+<td height='8' colspan='17'></td>
+</tr>
+<tr>
+<td height='6' colspan='4'></td>
+<td  valign='top' align='left'>
+<DIV    id='win0div$ICField277'><table cellpadding='0' cellspacing='0' cols='1' class='PABACKGROUNDINVISIBLENBO'  width='193'>
+<tr><td width='193' height='-8'>
+</td></tr>
+</table>
+</DIV></td>
+</tr>
+<tr>
+<td height='10' colspan='17'></td>
+</tr>
+<tr>
+<td height='2' colspan='7'></td>
+<td rowspan='2'  valign='top' align='left'>
+<DIV    id='win0div$ICField279'><table cellpadding='0' cellspacing='0' cols='1' class='PABACKGROUNDINVISIBLENBO'  width='45'>
+<tr><td width='45' height='-3'>
+</td></tr>
+</table>
+</DIV></td>
+</tr>
+<tr>
+<td height='9' colspan='3'></td>
+<td colspan='4' rowspan='2'  valign='top' align='left'>
+<DIV    id='win0divDERIVED_CLSRCH_DESCR200'><span  class='PALEVEL0SECONDARY' id='DERIVED_CLSRCH_DESCR200' >CPSC&nbsp; 120A - 01&nbsp;&nbsp; Introduction to Programming Lecture</span>
+</DIV></td>
+</tr>
+<tr>
+<td height='10' colspan='3'></td>
+</tr>
+<tr>
+<td height='14' colspan='3'></td>
+<td colspan='14'  valign='top' align='left'>
+<DIV    id='win0divDERIVED_CLSRCH_SSS_PAGE_KEYDESCR'><span  class='PSEDITBOX_DISPONLY' id='DERIVED_CLSRCH_SSS_PAGE_KEYDESCR' >CSU Fullerton | Fall 2026 | Lecture</span>
+</DIV></td>
+</tr>
+<tr>
+<td height='2' colspan='6'></td>
+<td colspan='3'  valign='top' align='left'>
+<DIV    id='win0div$ICField278'><table cellpadding='0' cellspacing='0' cols='1' class='PABACKGROUNDINVISIBLENBO'  width='255'>
+<tr><td width='255' height='-12'>
+</td></tr>
+</table>
+</DIV></td>
+</tr>
+<tr>
+<td height='2' colspan='17'></td>
+</tr>
+<tr>
+<td height='125' colspan='2'></td>
+<td colspan='14'  valign='top' align='left'>
+<DIV    id='win0divSSR_CLS_DTL_WRK_GROUP1'><table cellpadding='2' cellspacing='0' cols='1'  class='PSGROUPBOXWBO'  width='1118'>
+<tr><td class='PSGROUPBOXLABEL'  align='left'>Class Details</td></tr>
+<tr><td width='1113'>
+<table role='presentation'  border='0' id='ACE_SSR_CLS_DTL_WRK_GROUP1' cellpadding='0' cellspacing='0' cols='5' width='1146' class='PSGROUPBOX PTCPGROUPBOXWBO' style='border-style:none' >
+<tr>
+<td width='2' height='0'></td>
+<td width='548'></td>
+<td width='5'></td>
+<td width='579'></td>
+<td width='11'></td>
+</tr>
+<tr>
+<td height='105'></td>
+<td  valign='top' align='left'>
+<DIV    id='win0div$ICField193'><table cellpadding='2' cellspacing='0' cols='1'  class='PABACKGROUNDINVISIBLEWBO'  width='531'>
+<tr><td width='529'>
+<table role='presentation'  border='0' id='ACE_$ICField193' cellpadding='0' cellspacing='0' cols='11' width='545' class='PABACKGROUNDINVISIBLE' style='border-style:none' >
+<tr>
+<td width='0' height='4'></td>
+<td width='226'></td>
+<td width='1'></td>
+<td width='8'></td>
+<td width='6'></td>
+<td width='2'></td>
+<td width='6'></td>
+<td width='79'></td>
+<td width='20'></td>
+<td width='100'></td>
+<td width='93'></td>
+</tr>
+<tr>
+<td height='5' colspan='8'></td>
+<td rowspan='3'  valign='top' align='left'>
+<DIV    id='win0divSSR_CLS_DTL_WRK_SSR_STATUS_LONG'><div  style="width:20px; " >
+<!-- Begin HTML Area Name Undisclosed -->
+<img src="/cs/CFULPRD/86011/PS_CS_STATUS_OPEN_ICN_1.gif" width="16" height="16" alt="Open" STYLE="vertical-align:middle;text-align:center;margin-left:12px">
+<!-- End HTML Area -->
+</div>
+</DIV></td>
+</tr>
+<tr>
+<td height='11'></td>
+<td  valign='top' align='right'>
+<DIV  class=' PT_CP_DIV_LABEL' id='win0divSSR_CLS_DTL_WRK_SSR_DESCRSHORTlbl'><span  class='PSEDITBOXLABEL' >Status</span></DIV></td>
+<td colspan='2'></td>
+<td colspan='4' rowspan='2'  valign='top' align='left'>
+<DIV    id='win0divSSR_CLS_DTL_WRK_SSR_DESCRSHORT'><span  class='PSEDITBOX_DISPONLY' id='SSR_CLS_DTL_WRK_SSR_DESCRSHORT' >Open</span>
+</DIV></td>
+</tr>
+<tr>
+<td height='1'></td>
+<td colspan='2' rowspan='2'  valign='top' align='right'>
+<DIV  class=' PT_CP_DIV_LABEL' id='win0divSSR_CLS_DTL_WRK_CLASS_NBRlbl'><span  class='PSEDITBOXLABEL' >Class Number</span></DIV></td>
+</tr>
+<tr>
+<td height='15'></td>
+<td colspan='4' rowspan='11'></td>
+<td colspan='4' rowspan='2'  valign='top' align='left'>
+<DIV    id='win0divSSR_CLS_DTL_WRK_CLASS_NBR'><span  class='PSEDITBOX_DISPONLY' id='SSR_CLS_DTL_WRK_CLASS_NBR' >18355</span>
+</DIV></td>
+</tr>
+<tr>
+<td height='1'></td>
+<td colspan='2' rowspan='3'  valign='top' align='right'>
+<DIV  class=' PT_CP_DIV_LABEL' id='win0divSSR_CLS_DTL_WRK_SESSION_CODElbl'><span  class='PSEDITBOXLABEL' >Session</span></DIV></td>
+</tr>
+<tr>
+<td height='1'></td>
+<td colspan='4' rowspan='3'  valign='top' align='left'>
+<DIV    id='win0divPSXLATITEM_XLATLONGNAME$31$'><span  class='PSEDITBOX_DISPONLY' id='PSXLATITEM_XLATLONGNAME$31$' >Regular Academic Session</span>
+</DIV></td>
+</tr>
+<tr>
+<td height='14'></td>
+<td rowspan='9'  valign='top' align='left'>
+<DIV    id='win0divSSR_CLS_DTL_WRK_SESSION_CODE'><span  class='PTTRANSPARENT' id='SSR_CLS_DTL_WRK_SESSION_CODE' >1</span>
+</DIV></td>
+</tr>
+<tr>
+<td height='1'></td>
+<td colspan='2' rowspan='2'  valign='top' align='right'>
+<DIV  class=' PT_CP_DIV_LABEL' id='win0divSSR_CLS_DTL_WRK_UNITS_RANGElbl'><span  class='PSEDITBOXLABEL' >Units</span></DIV></td>
+</tr>
+<tr>
+<td height='15'></td>
+<td colspan='4' rowspan='2'  valign='top' align='left'>
+<DIV    id='win0divSSR_CLS_DTL_WRK_UNITS_RANGE'><span  class='PSEDITBOX_DISPONLY' id='SSR_CLS_DTL_WRK_UNITS_RANGE' >2 units</span>
+</DIV></td>
+</tr>
+<tr>
+<td height='1'></td>
+<td colspan='2' rowspan='3'  valign='top' align='right'>
+<DIV  class=' PT_CP_DIV_LABEL' id='win0divSSR_CLS_DTL_WRK_INSTRUCTION_MODElbl'><span  class='PSEDITBOXLABEL' >Instruction Mode</span></DIV></td>
+</tr>
+<tr>
+<td height='1'></td>
+<td colspan='4' rowspan='4'  valign='top' align='left'>
+<DIV    id='win0divINSTRUCT_MODE_DESCR'><span  class='PSEDITBOX_DISPONLY' id='INSTRUCT_MODE_DESCR' >In Person</span>
+</DIV></td>
+</tr>
+<tr>
+<td height='15'></td>
+<td rowspan='4'  valign='top' align='left'>
+<DIV    id='win0divSSR_CLS_DTL_WRK_INSTRUCTION_MODE'><span  class='PTTRANSPARENT' id='SSR_CLS_DTL_WRK_INSTRUCTION_MODE' >P</span>
+</DIV></td>
+</tr>
+<tr>
+<td height='1'></td>
+<td colspan='2' rowspan='3'  valign='top' align='right'>
+<DIV  class=' PT_CP_DIV_LABEL' id='win0divSSR_CLS_DTL_WRK_SSR_COMPONENT_LONG$273$lbl'><span  class='PSEDITBOXLABEL' >Class Components</span></DIV></td>
+</tr>
+<tr>
+<td height='2'></td>
+<td rowspan='2'  valign='top' align='left'>
+<DIV    id='win0divSSR_CLS_DTL_WRK_SSR_COMPONENT_LONG$273$'><span  class='PTTRANSPARENT' id='SSR_CLS_DTL_WRK_SSR_COMPONENT_LONG$273$' >&lt;table class=&quot;PSTEXT&quot;&gt;&lt;tr&gt;&lt;td&gt;Lecture Required&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;</span>
+</DIV></td>
+</tr>
+<tr>
+<td height='15'></td>
+<td colspan='3'></td>
+<td colspan='4'  valign='top' align='left'>
+<DIV    id='win0divSSR_CLS_DTL_WRK_SSR_COMPONENT_LONG'><div  style="width:214px; " >
+<!-- Begin HTML Area Name Undisclosed -->
+<table class="PSTEXT"><tr><td>Lecture Required</td></tr></table>
+<!-- End HTML Area -->
+</div>
+</DIV></td>
+</tr>
+</table>
+</td></tr>
+</table>
+</DIV></td>
+<td rowspan='2'></td>
+<td  valign='top' align='left'>
+<DIV    id='win0div$ICField191'><table cellpadding='2' cellspacing='0' cols='1'  class='PABACKGROUNDINVISIBLEWBO'  width='560'>
+<tr><td width='558'>
+<table role='presentation'  border='0' id='ACE_$ICField191' cellpadding='0' cellspacing='0' cols='6' width='575' class='PABACKGROUNDINVISIBLE' style='border-style:none' >
+<tr>
+<td width='0' height='8'></td>
+<td width='236'></td>
+<td width='10'></td>
+<td width='1'></td>
+<td width='8'></td>
+<td width='318'></td>
+</tr>
+<tr>
+<td height='15'></td>
+<td colspan='2'  valign='top' align='right'>
+<DIV  class=' PT_CP_DIV_LABEL' id='win0divPSXLATITEM_XLATLONGNAMElbl'><span  class='PSEDITBOXLABEL' >Academic Career</span></DIV></td>
+<td colspan='2' rowspan='4'></td>
+<td rowspan='2'  valign='top' align='left'>
+<DIV    id='win0divPSXLATITEM_XLATLONGNAME'><span  class='PSEDITBOX_DISPONLY' id='PSXLATITEM_XLATLONGNAME' >Undergraduate</span>
+</DIV></td>
+</tr>
+<tr>
+<td height='1'></td>
+<td rowspan='2'  valign='top' align='right'>
+<DIV  class=' PT_CP_DIV_LABEL' id='win0divSSR_CLS_DTL_WRK_SSR_DATE_LONGlbl'><span  class='PSEDITBOXLABEL' >Dates</span></DIV></td>
+</tr>
+<tr>
+<td height='16'></td>
+<td rowspan='7'></td>
+<td  valign='top' align='left'>
+<DIV    id='win0divSSR_CLS_DTL_WRK_SSR_DATE_LONG'><span  class='PSEDITBOX_DISPONLY' id='SSR_CLS_DTL_WRK_SSR_DATE_LONG' >8/22/2026 - 12/11/2026</span>
+</DIV></td>
+</tr>
+<tr>
+<td height='1'></td>
+<td rowspan='2'  valign='top' align='right'>
+<DIV  class=' PT_CP_DIV_LABEL' id='win0divSSR_CLS_DTL_WRK_GRADING_BASISlbl'><span  class='PSEDITBOXLABEL' >Grading</span></DIV></td>
+<td rowspan='2'  valign='top' align='left'>
+<DIV    id='win0divGRADE_BASIS_TBL_DESCRFORMAL'><span  class='PSEDITBOX_DISPONLY' id='GRADE_BASIS_TBL_DESCRFORMAL' >Graded</span>
+</DIV></td>
+</tr>
+<tr>
+<td height='15'></td>
+<td rowspan='5'></td>
+<td rowspan='5'  valign='top' align='left'>
+<DIV    id='win0divSSR_CLS_DTL_WRK_GRADING_BASIS'><span  class='PTTRANSPARENT' id='SSR_CLS_DTL_WRK_GRADING_BASIS' >GRD</span>
+</DIV></td>
+</tr>
+<tr>
+<td height='1'></td>
+<td rowspan='2'  valign='top' align='right'>
+<DIV  class=' PT_CP_DIV_LABEL' id='win0divSSR_CLS_DTL_WRK_LOCATIONlbl'><span  class='PSEDITBOXLABEL' >Location</span></DIV></td>
+<td rowspan='2'  valign='top' align='left'>
+<DIV    id='win0divCAMPUS_LOC_VW_DESCR'><span  class='PSEDITBOX_DISPONLY' id='CAMPUS_LOC_VW_DESCR' >CSU Fullerton</span>
+</DIV></td>
+</tr>
+<tr>
+<td height='15'></td>
+<td rowspan='3'  valign='top' align='left'>
+<DIV    id='win0divSSR_CLS_DTL_WRK_LOCATION'><span  class='PTTRANSPARENT' id='SSR_CLS_DTL_WRK_LOCATION' >FULLERTON</span>
+</DIV></td>
+</tr>
+<tr>
+<td height='1'></td>
+<td rowspan='2'  valign='top' align='right'>
+<DIV  class=' PT_CP_DIV_LABEL' id='win0divSSR_CLS_DTL_WRK_CAMPUSlbl'><span  class='PSEDITBOXLABEL' >Campus</span></DIV></td>
+<td rowspan='2'  valign='top' align='left'>
+<DIV    id='win0divCAMPUS_TBL_DESCR'><span  class='PSEDITBOX_DISPONLY' id='CAMPUS_TBL_DESCR' >Fullerton Campus</span>
+</DIV></td>
+</tr>
+<tr>
+<td height='14'></td>
+<td  valign='top' align='left'>
+<DIV    id='win0divSSR_CLS_DTL_WRK_CAMPUS'><span  class='PTTRANSPARENT' id='SSR_CLS_DTL_WRK_CAMPUS' >FUL</span>
+</DIV></td>
+</tr>
+</table>
+</td></tr>
+</table>
+</DIV></td>
+</tr>
+<tr>
+<td height='2' colspan='2'></td>
+</tr>
+</table>
+</td></tr>
+</table>
+</DIV></td>
+</tr>
+<tr>
+<td height='8' colspan='17'></td>
+</tr>
+<tr>
+<td height='79' colspan='2'></td>
+<td colspan='11'  valign='top' align='left'>
+<DIV    id='win0divSSR_CLSRCH_MTG$0'><div class='PTCPGRIDTITLE' onclick='javascript:if(event.target.id == this.firstElementChild.firstElementChild.id) { return true; } else return((this.firstElementChild &amp;&amp; this.firstElementChild.firstElementChild) != null ? this.firstElementChild.firstElementChild.click() : false);'  align='left' > Meeting Information </div>
+<table cellspacing='0' class='PSLEVEL1GRIDWBO'  id='SSR_CLSRCH_MTG$scroll$0' dir='ltr' cols='1' width='1104' cellpadding='0'>
+<tr><td>
+<table dir='ltr' border='0' cellpadding='2' cellspacing='0' cols='4' width='100%' class='PSLEVEL1GRID' style='border-style:none' >
+<tr>
+<th scope='col' width='98' align='left' class='PSLEVEL1GRIDCOLUMNHDR PSGRIDFIRSTCOLUMN' >Days &amp; Times</th>
+<th scope='col' width='98' align='left' class='PSLEVEL1GRIDCOLUMNHDR' >Room</th>
+<th scope='col' width='98' align='left' class='PSLEVEL1GRIDCOLUMNHDR' >Instructor</th>
+<th scope='col' width='98' align='left' class='PSLEVEL1GRIDCOLUMNHDR' >Meeting Dates</th>
+</tr>
+<tr id='trSSR_CLSRCH_MTG$0_row1' bufnum='0' valign='center'>
+<th scope="row" align='left'  height='35' class='PSLEVEL1GRIDODDROW PSGRIDFIRSTCOLUMN' >
+<DIV    id='win0divMTG_SCHED$0'><span  class='PSLONGEDITBOX' id='MTG_SCHED$0' >MoWe 8:30AM - 9:20AM</span>
+</DIV></td>
+<td class='PSLEVEL1GRIDODDROW'  align='left'  class='PSLEVEL1GRIDODDROW' >
+<DIV    id='win0divMTG_LOC$0'><span  class='PSLONGEDITBOX' id='MTG_LOC$0' >E 202 - Lecture Room</span>
+</DIV></td>
+<td class='PSLEVEL1GRIDODDROW'  align='left'  class='PSLEVEL1GRIDODDROW' >
+<DIV    id='win0divMTG_INSTR$0'><span  class='PSLONGEDITBOX' id='MTG_INSTR$0' >Thomas Bettens</span>
+</DIV></td>
+<td class='PSLEVEL1GRIDODDROW'  align='left'  class='PSLEVEL1GRIDODDROW' >
+<DIV    id='win0divMTG_DATE$0'><span  class='PSLONGEDITBOX' id='MTG_DATE$0' >08/22/2026 - 12/11/2026</span>
+</DIV></td>
+</tr>
+</table></td></tr>
+</table>
+</DIV>
+</td>
+</tr>
+<tr>
+<td height='4' colspan='17'></td>
+</tr>
+<tr>
+<td height='79' colspan='2'></td>
+<td colspan='11'  valign='top' align='left'>
+<DIV    id='win0divFUL_FINAEXAM_VW$0'><div class='PTCPGRIDTITLE' onclick='javascript:if(event.target.id == this.firstElementChild.firstElementChild.id) { return true; } else return((this.firstElementChild &amp;&amp; this.firstElementChild.firstElementChild) != null ? this.firstElementChild.firstElementChild.click() : false);'  align='left' > Final Exam Schedule </div>
+<table cellspacing='0' class='PSLEVEL1GRIDWBO'  id='FUL_FINAEXAM_VW$scroll$0' dir='ltr' cols='1' width='1104' cellpadding='0'>
+<tr><td>
+<table dir='ltr' border='0' cellpadding='2' cellspacing='0' cols='4' width='100%' class='PSLEVEL1GRID' style='border-style:none' >
+<tr>
+<th scope='col' width='100' align='left' class='PSLEVEL1GRIDCOLUMNHDR PSGRIDFIRSTCOLUMN' >Exam Date</th>
+<th scope='col' width='127' align='left' class='PSLEVEL1GRIDCOLUMNHDR' >Exam Starting Time</th>
+<th scope='col' width='122' align='left' class='PSLEVEL1GRIDCOLUMNHDR' >Exam Ending Time</th>
+<th scope='col' width='100' align='left' class='PSLEVEL1GRIDCOLUMNHDR' >Facility ID</th>
+</tr>
+<tr id='trFUL_FINAEXAM_VW$0_row1' bufnum='0' valign='center' onClick="HighLightTR('rgb(238,238,238)','','trFUL_FINAEXAM_VW$0_row1');" onMouseOver="hoverLightTR('rgb(253,255,200)','',0,'trFUL_FINAEXAM_VW$0_row1');" onmouseout="hoverLightTR('rgb(253,255,200)','',1,'trFUL_FINAEXAM_VW$0_row1');">
+<td align='left'  height='35' class='PSLEVEL1GRIDODDROW PSGRIDFIRSTCOLUMN' >
+<DIV    id='win0divFUL_FINAEXAM_VW_EXAM_DT$0'><span  class='PSEDITBOX_DISPONLY' id='FUL_FINAEXAM_VW_EXAM_DT$0' >12/16/2026</span>
+</DIV></td>
+<td class='PSLEVEL1GRIDODDROW'  align='left'  class='PSLEVEL1GRIDODDROW' >
+<DIV    id='win0divFUL_FINAEXAM_VW_EXAM_START_TIME$0'><span  class='PSEDITBOX_DISPONLY' id='FUL_FINAEXAM_VW_EXAM_START_TIME$0' >9:00AM</span>
+</DIV></td>
+<td class='PSLEVEL1GRIDODDROW'  align='left'  class='PSLEVEL1GRIDODDROW' >
+<DIV    id='win0divFUL_FINAEXAM_VW_EXAM_END_TIME$0'><span  class='PSEDITBOX_DISPONLY' id='FUL_FINAEXAM_VW_EXAM_END_TIME$0' >10:50AM</span>
+</DIV></td>
+<td class='PSLEVEL1GRIDODDROW'  align='left'  class='PSLEVEL1GRIDODDROW' >
+<DIV    id='win0divFUL_FINAEXAM_VW_FACILITY_ID$0'><span  class='PSEDITBOX_DISPONLY' id='FUL_FINAEXAM_VW_FACILITY_ID$0' >E202</span>
+</DIV></td>
+</tr>
+</table></td></tr>
+</table>
+</DIV>
+</td>
+</tr>
+<tr>
+<td height='8' colspan='17'></td>
+</tr>
+<tr>
+<td height='51' colspan='2'></td>
+<td colspan='12'  valign='top' align='left'>
+<DIV    id='win0divSSR_CLS_DTL_WRK_GROUP2'><table cellpadding='2' cellspacing='0' cols='1'  class='PSGROUPBOXWBO'  width='1005'>
+<tr><td class='PSGROUPBOXLABEL'  align='left'>Enrollment Information</td></tr>
+<tr><td width='1000'>
+<table role='presentation'  border='0' id='ACE_SSR_CLS_DTL_WRK_GROUP2' cellpadding='0' cellspacing='0' cols='4' width='1030' class='PSGROUPBOX PTCPGROUPBOXWBO' style='border-style:none' >
+<tr>
+<td width='0' height='4'></td>
+<td width='337'></td>
+<td width='10'></td>
+<td width='684'></td>
+</tr>
+<tr>
+<td height='1'></td>
+<td rowspan='2'  valign='top' align='right'>
+<DIV  class=' PT_CP_DIV_LABEL' id='win0divSSR_CLS_DTL_WRK_SSR_REQUISITE_LONGlbl'><span  class='PSEDITBOXLABEL' >Enrollment Requirements</span></DIV></td>
+</tr>
+<tr>
+<td height='27'></td>
+<td></td>
+<td  valign='top' align='left'>
+<DIV    id='win0divSSR_CLS_DTL_WRK_SSR_REQUISITE_LONG'><span  class='PSLONGEDITBOX' style='word-wrap:break-word;overflow:hidden;display:block; width:623px;  overflow:auto;' id='SSR_CLS_DTL_WRK_SSR_REQUISITE_LONG' >Corequisite: CPSC 120L.</span>
+</DIV></td>
+</tr>
+</table>
+</td></tr>
+</table>
+</DIV></td>
+</tr>
+<tr>
+<td height='8' colspan='17'></td>
+</tr>
+<tr>
+<td height='76' colspan='2'></td>
+<td colspan='12'  valign='top' align='left'>
+<DIV    id='win0divSSR_CLS_DTL_WRK_GROUP3'><table cellpadding='2' cellspacing='0' cols='1'  class='PSGROUPBOXWBO'  width='1005'>
+<tr><td class='PSGROUPBOXLABEL'  align='left'>Class Availability</td></tr>
+<tr><td width='1000'>
+<table role='presentation'  border='0' id='ACE_SSR_CLS_DTL_WRK_GROUP3' cellpadding='0' cellspacing='0' cols='7' width='1030' class='PSGROUPBOX PTCPGROUPBOXWBO' style='border-style:none' >
+<tr>
+<td width='0' height='9'></td>
+<td width='357'></td>
+<td width='40'></td>
+<td width='2'></td>
+<td width='265'></td>
+<td width='42'></td>
+<td width='323'></td>
+</tr>
+<tr>
+<td height='16'></td>
+<td  valign='top' align='right'>
+<DIV  class=' PT_CP_DIV_LABEL' id='win0divSSR_CLS_DTL_WRK_ENRL_CAPlbl'><span  class='PSEDITBOXLABEL' >Class Capacity</span></DIV></td>
+<td colspan='2'  valign='top' align='right'>
+<DIV    id='win0divSSR_CLS_DTL_WRK_ENRL_CAP'><span  class='PSEDITBOX_DISPONLY' id='SSR_CLS_DTL_WRK_ENRL_CAP' >60</span>
+</DIV></td>
+<td  valign='top' align='right'>
+<DIV  class=' PT_CP_DIV_LABEL' id='win0divSSR_CLS_DTL_WRK_WAIT_CAPlbl'><span  class='PSEDITBOXLABEL' >Wait List Capacity</span></DIV></td>
+<td  valign='top' align='right'>
+<DIV    id='win0divSSR_CLS_DTL_WRK_WAIT_CAP'><span  class='PSEDITBOX_DISPONLY' id='SSR_CLS_DTL_WRK_WAIT_CAP' >0</span>
+</DIV></td>
+</tr>
+<tr>
+<td height='16'></td>
+<td  valign='top' align='right'>
+<DIV  class=' PT_CP_DIV_LABEL' id='win0divSSR_CLS_DTL_WRK_ENRL_TOTlbl'><span  class='PSEDITBOXLABEL' >Enrollment Total</span></DIV></td>
+<td colspan='2'  valign='top' align='right'>
+<DIV    id='win0divSSR_CLS_DTL_WRK_ENRL_TOT'><span  class='PSEDITBOX_DISPONLY' id='SSR_CLS_DTL_WRK_ENRL_TOT' >53</span>
+</DIV></td>
+<td rowspan='2'  valign='top' align='right'>
+<DIV  class=' PT_CP_DIV_LABEL' id='win0divSSR_CLS_DTL_WRK_WAIT_TOTlbl'><span  class='PSEDITBOXLABEL' >Wait List Total</span></DIV></td>
+<td rowspan='2'  valign='top' align='right'>
+<DIV    id='win0divSSR_CLS_DTL_WRK_WAIT_TOT'><span  class='PSEDITBOX_DISPONLY' id='SSR_CLS_DTL_WRK_WAIT_TOT' >0</span>
+</DIV></td>
+</tr>
+<tr>
+<td height='16'></td>
+<td  valign='top' align='right'>
+<DIV  class=' PT_CP_DIV_LABEL' id='win0divSSR_CLS_DTL_WRK_AVAILABLE_SEATSlbl'><span  class='PSEDITBOXLABEL' >Available Seats</span></DIV></td>
+<td  valign='top' align='right'>
+<DIV    id='win0divSSR_CLS_DTL_WRK_AVAILABLE_SEATS'><span  class='PSEDITBOX_DISPONLY' id='SSR_CLS_DTL_WRK_AVAILABLE_SEATS' >7</span>
+</DIV></td>
+</tr>
+</table>
+</td></tr>
+</table>
+</DIV></td>
+</tr>
+<tr>
+<td height='8' colspan='17'></td>
+</tr>
+<tr>
+<td height='68' colspan='2'></td>
+<td colspan='13'  valign='top' align='left'>
+<DIV    id='win0divSSR_CLS_DTL_WRK_GROUP5'><table cellpadding='2' cellspacing='0' cols='1'  class='PSGROUPBOXWBO'  width='1010'>
+<tr><td class='PSGROUPBOXLABEL'  align='left'>Notes</td></tr>
+<tr><td width='1005'>
+<table role='presentation'  border='0' id='ACE_SSR_CLS_DTL_WRK_GROUP5' cellpadding='0' cellspacing='0' cols='4' width='1035' class='PSGROUPBOX PTCPGROUPBOXWBO' style='border-style:none' >
+<tr>
+<td width='0' height='7'></td>
+<td width='186'></td>
+<td width='10'></td>
+<td width='840'></td>
+</tr>
+<tr>
+<td height='1'></td>
+<td rowspan='2'  valign='top' align='right'>
+<DIV  class=' PT_CP_DIV_LABEL' id='win0divDERIVED_CLSRCH_SSR_CLASSNOTE_LONGlbl'><span  class='PSEDITBOXLABEL' >Class Notes</span></DIV></td>
+</tr>
+<tr>
+<td height='41'></td>
+<td></td>
+<td  valign='top' align='left'>
+<DIV    id='win0divDERIVED_CLSRCH_SSR_CLASSNOTE_LONG'><span  class='PSLONGEDITBOX' style='word-wrap:break-word;overflow:hidden;display:block; width:723px;  overflow:auto;' id='DERIVED_CLSRCH_SSR_CLASSNOTE_LONG' >MUST also be enrolled in a CPSC 120L course concurrently.</span>
+</DIV></td>
+</tr>
+</table>
+</td></tr>
+</table>
+</DIV></td>
+</tr>
+<tr>
+<td height='8' colspan='17'></td>
+</tr>
+<tr>
+<td height='56' colspan='2'></td>
+<td colspan='13'  valign='top' align='left'>
+<DIV    id='win0divSSR_CLS_DTL_WRK_GROUP6'><table cellpadding='2' cellspacing='0' cols='1'  class='PSGROUPBOXWBO'  width='1010'>
+<tr><td class='PSGROUPBOXLABEL'  align='left'>Description</td></tr>
+<tr><td width='1005'>
+<table role='presentation'  border='0' id='ACE_SSR_CLS_DTL_WRK_GROUP6' cellpadding='0' cellspacing='0' cols='2' width='1035' class='PSGROUPBOX PTCPGROUPBOXWBO' style='border-style:none' >
+<tr>
+<td width='74' height='8'></td>
+<td width='961'></td>
+</tr>
+<tr>
+<td height='29'></td>
+<td  valign='top' align='left'>
+<DIV    id='win0divDERIVED_CLSRCH_DESCRLONG'><span  class='PSLONGEDITBOX' style='word-wrap:break-word;overflow:hidden;display:block; width:840px;  overflow:auto;' id='DERIVED_CLSRCH_DESCRLONG' >Introduction computer science and computer programming, including designing programs; sequential execution; variables, assignment and arithmetic; control flow, Boolean logic, selection and loops; input/output; functions; debugging; practical applications; and development methodologies. (50-minute lecture)</span>
+</DIV></td>
+</tr>
+</table>
+</td></tr>
+</table>
+</DIV></td>
+</tr>
+<tr>
+<td height='8' colspan='17'></td>
+</tr>
+<tr>
+<td height='30' colspan='2'></td>
+<td colspan='10'  valign='top' align='left'>
+<DIV    id='win0div$ICField241'><table cellpadding='2' cellspacing='0' cols='1'  class='PABACKGROUNDINVISIBLEWBO'  width='998'>
+<tr><td width='996'>
+<table role='presentation'  border='0' id='ACE_$ICField241' cellpadding='0' cellspacing='0' cols='2' width='1025' class='PABACKGROUNDINVISIBLE' style='border-style:none' >
+<tr>
+<td width='366' height='3'></td>
+<td width='659'></td>
+</tr>
+<tr>
+<td height='25'></td>
+<td nowrap='nowrap'  valign='top' align='left'>
+<DIV    id='win0divCLASS_SRCH_WRK2_SSR_PB_BACK'><a role='presentation' class='PSPUSHBUTTON Left' onclick='javascript:if(event.target.id == this.firstChild.firstChild.id) { return true; } else return((this.firstChild &amp;&amp; this.firstChild.firstChild) != null ? this.firstChild.firstChild.click() : false);'><span style='background-Color: transparent;'><input type='button' name='CLASS_SRCH_WRK2_SSR_PB_BACK' id='CLASS_SRCH_WRK2_SSR_PB_BACK' tabindex='315' value='View Search Results'  class='PSPUSHBUTTON' style='width:244px; ' onclick="submitAction_win0(document.win0,this.id,event);" title='Return to Results'  /></span></a></DIV></td>
+</tr>
+</table>
+</td></tr>
+</table>
+</DIV></td>
+</tr>
+<tr>
+<td height='6' colspan='17'></td>
+</tr>
+<tr>
+<td height='39'></td>
+<td colspan='10'  valign='top' align='left'>
+<DIV    id='win0divDERIVED_CLSRCH_SSR_GROUP_FTR1'><table cellpadding='2' cellspacing='0' cols='1'  class='PABACKGROUNDINVISIBLEWBO'  width='815'>
+<tr><td width='812'>
+<table role='presentation'  border='0' id='ACE_DERIVED_CLSRCH_SSR_GROUP_FTR1' cellpadding='0' cellspacing='0' cols='3' width='837' class='PABACKGROUNDINVISIBLE PTCPGROUPBOXWBO' style='border-style:none' >
+<tr>
+<td width='3' height='0'></td>
+<td width='820'></td>
+<td width='12'></td>
+</tr>
+<tr>
+<td height='17'></td>
+<td  valign='top' align='left'>
+<DIV    id='win0divDERIVED_SSTSNAV_GROUP_BOX$19$'><table cellpadding='2' cellspacing='0' cols='1'  class='PABACKGROUNDINVISIBLEWBO'  width='795'>
+<tr><td width='793'>
+<table role='presentation'  border='0' id='ACE_DERIVED_SSTSNAV_GROUP_BOX$19$' cellpadding='0' cellspacing='0' cols='3' width='816' class='PABACKGROUNDINVISIBLE PTCPGROUPBOXWBO' style='border-style:none' >
+<tr>
+<td width='6' height='0'></td>
+<td width='780'></td>
+<td width='30'></td>
+</tr>
+<tr>
+<td height='12'></td>
+<td  valign='top' align='left'>
+<hr width='100%' align='left'  class='PSHORIZONTALRULE' />
+</td>
+</tr>
+</table>
+</td></tr>
+</table>
+</DIV></td>
+</tr>
+<tr>
+<td height='9' colspan='3'></td>
+</tr>
+</table>
+</td></tr>
+</table>
+</DIV></td>
+</tr>
+<tr>
+<td height='0' colspan='17'></td>
+</tr>
+</table>
+</DIV>
+</td></tr>
+</table>
+<div id='pt_dragtxt' class='PSLEVEL1GRIDCOLUMNHDR'></div><div onmouseup='ptGridResizeObj_win0.TDselUp();' onmousemove='ptGridResizeObj_win0.TDselMove();' id='pt_dragResize' onmouseout='ptGridResizeObj_win0.dragTD=false;' onmbouseover='ptGridResizeObj_win0.dragTD=true;'></div>]]></FIELD>
+<FIELD id='win0divPSPANELTABLINKS'><![CDATA[]]></FIELD>
+<SYSVAR id='sysvar'><![CDATA[nMaxSavedStates=5;
+sHistURL="https://cmsweb.fullerton.edu/psc/CFULPRD/EMPLOYEE/SA/c/SA_LEARNER_SERVICES.CLASS_SEARCH.GBL?page=SSR_CLSRCH_DTL&public=";
+bCloseModal = false;
+bICList = false;
+bHtml5Doc = true;
+bClearBackState=false;
+bPageTransfered=true;
+bTransferAnimate=false;
+UpdateHistory('', '', 'returntolastpage@0', 'SSR_CLSRCH_DTL', 0, '', 1, 0);
+AddToHistory('Class Detail', '', 'returntolastpage@0', 'SSR_CLSRCH_DTL', 4, 0, 1, 0,'', 1, '', 0);
+corsHistoryTansaction();
+bCleanHtml = false;
+bDefer = true;
+document.hiddenFldArr_win0 =new Array('ICType','ICElementNum','ICStateNum','ICAction','ICModelCancel','ICXPos','ICYPos','ResponsetoDiffFrame','TargetFrameName','FacetPath','ICFocus','ICSaveWarningFilter','ICChanged','ICSkipPending','ICAutoSave','ICResubmit','ICSID','ICActionPrompt','ICBcDomData','ICPanelName','ICFind','ICAddCount','ICAppClsData');
+document.chgFldArr_win0 = new Array();
+bCDATA = false;
+bAccessibleLayout = false;
+bGenDomInfo = false;
+]]></SYSVAR></PAGE>
