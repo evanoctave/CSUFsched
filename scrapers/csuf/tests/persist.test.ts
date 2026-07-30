@@ -1,9 +1,32 @@
-import { describe, it, expect } from 'vitest';
-import { createPool } from '@csufsched/db';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { createPool, runMigrations } from '@csufsched/db';
 import { persistTerm } from '../src/persist';
 import type { ScrapedCourse } from '../src/types';
 
 const TEST_URL = process.env.TEST_DATABASE_URL;
+const SCHEMA = 'test_persist';
+
+// Every package's integration tests share one TEST_DATABASE_URL and run
+// concurrently, so this file migrates into a scratch schema of its own rather
+// than reading and writing whatever happens to be in `public`.
+function scopedUrl(url: string, schema: string): string {
+  const parsed = new URL(url);
+  parsed.searchParams.set('options', `-c search_path=${schema}`);
+  return parsed.toString();
+}
+
+async function resetSchema(schema: string, recreate: boolean): Promise<void> {
+  const admin = createPool(TEST_URL!);
+  try {
+    await admin.query(
+      `DROP SCHEMA IF EXISTS ${schema} CASCADE${recreate ? `; CREATE SCHEMA ${schema}` : ''}`,
+    );
+  } finally {
+    await admin.end();
+  }
+}
 
 function course(overrides: Partial<ScrapedCourse> = {}): ScrapedCourse {
   return {
@@ -26,8 +49,26 @@ function course(overrides: Partial<ScrapedCourse> = {}): ScrapedCourse {
 }
 
 describe.skipIf(!TEST_URL)('persistTerm (integration)', () => {
+  beforeAll(async () => {
+    await resetSchema(SCHEMA, true);
+    const pool = createPool(scopedUrl(TEST_URL!, SCHEMA));
+    const dir = path.join(
+      path.dirname(fileURLToPath(import.meta.url)),
+      '..', '..', '..', 'db', 'migrations',
+    );
+    try {
+      await runMigrations(pool, dir);
+    } finally {
+      await pool.end();
+    }
+  });
+
+  afterAll(async () => {
+    await resetSchema(SCHEMA, false);
+  });
+
   it('keeps section ids stable across runs, replaces meetings, and prunes vanished rows', async () => {
-    const pool = createPool(TEST_URL!);
+    const pool = createPool(scopedUrl(TEST_URL!, SCHEMA));
     try {
       const first = await persistTerm(pool, {
         termCode: '2299',
@@ -86,7 +127,7 @@ describe.skipIf(!TEST_URL)('persistTerm (integration)', () => {
   });
 
   it('leaves the previous catalog untouched when a write fails mid-run', async () => {
-    const pool = createPool(TEST_URL!);
+    const pool = createPool(scopedUrl(TEST_URL!, SCHEMA));
     try {
       await persistTerm(pool, {
         termCode: '2297',

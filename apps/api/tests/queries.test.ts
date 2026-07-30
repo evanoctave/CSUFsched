@@ -16,6 +16,27 @@ import {
 import { makeQueries, type ApiQueries } from '../src/queries';
 
 const TEST_URL = process.env.TEST_DATABASE_URL;
+const SCHEMA = 'test_api_queries';
+
+// Every package's integration tests share one TEST_DATABASE_URL and run
+// concurrently, so this file migrates into a scratch schema of its own rather
+// than wiping `public` out from under its neighbours.
+function scopedUrl(url: string, schema: string): string {
+  const parsed = new URL(url);
+  parsed.searchParams.set('options', `-c search_path=${schema}`);
+  return parsed.toString();
+}
+
+async function resetSchema(schema: string, recreate: boolean): Promise<void> {
+  const admin = createPool(TEST_URL!);
+  try {
+    await admin.query(
+      `DROP SCHEMA IF EXISTS ${schema} CASCADE${recreate ? `; CREATE SCHEMA ${schema}` : ''}`,
+    );
+  } finally {
+    await admin.end();
+  }
+}
 
 describe.skipIf(!TEST_URL)('queries (integration)', () => {
   let pool: pg.Pool;
@@ -27,8 +48,8 @@ describe.skipIf(!TEST_URL)('queries (integration)', () => {
   let math150bSec01: number;
 
   beforeAll(async () => {
-    pool = createPool(TEST_URL!);
-    await pool.query('DROP SCHEMA public CASCADE; CREATE SCHEMA public;');
+    await resetSchema(SCHEMA, true);
+    pool = createPool(scopedUrl(TEST_URL!, SCHEMA));
     const dir = path.join(
       path.dirname(fileURLToPath(import.meta.url)),
       '..', '..', '..', 'db', 'migrations',
@@ -94,6 +115,7 @@ describe.skipIf(!TEST_URL)('queries (integration)', () => {
 
   afterAll(async () => {
     await pool.end();
+    await resetSchema(SCHEMA, false);
   });
 
   it('listTerms returns terms', async () => {
