@@ -48,3 +48,14 @@ export interface SearchCriteria {
   subject: string;
   career: string;
 }
+
+export interface CatalogOption {
+  code: string;
+  name: string;
+}
+
+export interface Catalog {
+  terms: CatalogOption[];
+  subjects: CatalogOption[];
+  careers: CatalogOption[];
+}
