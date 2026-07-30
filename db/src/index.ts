@@ -1,4 +1,5 @@
 export { createPool } from './pool.ts';
+export type { Pool } from 'pg';
 export { orderMigrations, runMigrations } from './migrate.ts';
 export {
   upsertTerm,

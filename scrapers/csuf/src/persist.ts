@@ -1,5 +1,4 @@
 import {
-  createPool,
   upsertTerm,
   upsertDepartment,
   upsertCourse,
@@ -9,9 +8,8 @@ import {
   deleteCoursesNotIn,
   deleteSectionsNotIn,
 } from '@csufsched/db';
+import type { Pool } from '@csufsched/db';
 import type { PersistInput, PersistResult } from './types.ts';
-
-type Pool = ReturnType<typeof createPool>;
 
 // One transaction for the whole term: readers on other connections keep seeing
 // yesterday's catalog until commit, and section ids survive so Plan 4's share
