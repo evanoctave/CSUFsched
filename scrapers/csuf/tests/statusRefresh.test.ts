@@ -35,7 +35,7 @@ function deps(over: Partial<TestDeps> = {}): TestDeps {
     search: vi.fn<(criteria: SearchCriteria) => Promise<SearchOutcome>>(
       async () => outcome([resultRow(0, '12345', 'O'), resultRow(1, '12346', 'W')]),
     ),
-    countExistingSections: vi.fn<() => Promise<number>>(async () => 4),
+    countExistingSections: vi.fn<() => Promise<number>>(async () => 2),
     applyUpdates: vi.fn<(updates: Array<{ classNbr: string; status: string }>) => Promise<number>>(async () => 2),
     sanityMinRatio: 0.9,
     ...over,
@@ -52,10 +52,8 @@ describe('refreshStatuses', () => {
     expect(d.applyUpdates).toHaveBeenCalledWith([
       { classNbr: '12345', status: 'open' },
       { classNbr: '12346', status: 'waitlist' },
-      { classNbr: '12345', status: 'open' },
-      { classNbr: '12346', status: 'waitlist' },
     ]);
-    expect(summary.sectionsObserved).toBe(4);
+    expect(summary.sectionsObserved).toBe(2);
     expect(summary.sectionsUpdated).toBe(2);
     expect(summary.ok).toBe(true);
   });
@@ -71,7 +69,8 @@ describe('refreshStatuses', () => {
     const summary = await refreshStatuses(d);
 
     expect(summary.rowsSkipped).toHaveLength(1);
-    expect(d.applyUpdates).toHaveBeenCalledWith([]);
+    expect(summary.ok).toBe(false);
+    expect(d.applyUpdates).not.toHaveBeenCalled();
   });
 
   it('reports the result rows the HTML parser skipped', async () => {
@@ -98,7 +97,7 @@ describe('refreshStatuses', () => {
     expect(summary.ok).toBe(false);
   });
 
-  it('records a failed search and keeps going', async () => {
+  it('runs remaining searches but applies nothing after one search fails', async () => {
     const d = deps({
       search: vi
         .fn<(criteria: SearchCriteria) => Promise<SearchOutcome>>()
@@ -108,7 +107,64 @@ describe('refreshStatuses', () => {
     });
     const summary = await refreshStatuses(d);
 
-    expect(summary.searchErrors).toEqual([{ subject: 'CPSC', career: 'UGRD', error: 'boom' }]);
-    expect(d.applyUpdates).toHaveBeenCalledWith([{ classNbr: '12345', status: 'closed' }]);
+    expect(d.search).toHaveBeenCalledTimes(2);
+    expect(d.applyUpdates).not.toHaveBeenCalled();
+    expect(summary.ok).toBe(false);
+    expect(summary.searchErrors).toEqual([
+      { subject: 'CPSC', career: 'UGRD', error: 'boom' },
+    ]);
+  });
+
+  it('deduplicates class numbers before counting and updating', async () => {
+    const d = deps({
+      subjects: ['CPSC'],
+      careers: ['UGRD', 'PBAC'],
+      search: vi.fn<(criteria: SearchCriteria) => Promise<SearchOutcome>>(
+        async () => outcome([resultRow(0, '12345', 'O')]),
+      ),
+      countExistingSections: vi.fn(async () => 1),
+    });
+
+    const summary = await refreshStatuses(d);
+
+    expect(summary.sectionsObserved).toBe(1);
+    expect(d.applyUpdates).toHaveBeenCalledWith([
+      { classNbr: '12345', status: 'open' },
+    ]);
+  });
+
+  it('applies nothing when duplicate observations conflict', async () => {
+    const d = deps({
+      subjects: ['CPSC'],
+      careers: ['UGRD', 'PBAC'],
+      search: vi
+        .fn<(criteria: SearchCriteria) => Promise<SearchOutcome>>()
+        .mockResolvedValueOnce(outcome([resultRow(0, '12345', 'O')]))
+        .mockResolvedValueOnce(outcome([resultRow(0, '12345', 'C')])),
+      countExistingSections: vi.fn(async () => 1),
+    });
+
+    const summary = await refreshStatuses(d);
+
+    expect(summary.ok).toBe(false);
+    expect(summary.rowsSkipped[0].error).toMatch(/conflicting statuses/);
+    expect(d.applyUpdates).not.toHaveBeenCalled();
+  });
+
+  it('applies nothing after an HTML result row is skipped', async () => {
+    const d = deps({
+      subjects: ['CPSC'],
+      search: vi.fn<(criteria: SearchCriteria) => Promise<SearchOutcome>>(
+        async () => outcome([resultRow(0, '12345', 'O')], [
+          { rowIndex: 9, error: 'missing status icon' },
+        ]),
+      ),
+      countExistingSections: vi.fn(async () => 1),
+    });
+
+    const summary = await refreshStatuses(d);
+
+    expect(summary.ok).toBe(false);
+    expect(d.applyUpdates).not.toHaveBeenCalled();
   });
 });

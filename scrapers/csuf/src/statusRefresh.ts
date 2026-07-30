@@ -34,7 +34,9 @@ export async function refreshStatuses(deps: StatusRefreshDeps): Promise<StatusRe
     resultRowsSkipped: [],
   };
 
-  const updates: Array<{ classNbr: string; status: string }> = [];
+  const updates = new Map<string, string>();
+  const conflicted = new Set<string>();
+  let incomplete = false;
 
   for (const subject of deps.subjects) {
     for (const career of deps.careers) {
@@ -42,6 +44,7 @@ export async function refreshStatuses(deps: StatusRefreshDeps): Promise<StatusRe
       try {
         found = await deps.search({ termCode: deps.termCode, subject, career });
       } catch (err) {
+        incomplete = true;
         summary.searchErrors.push({
           subject,
           career,
@@ -49,32 +52,52 @@ export async function refreshStatuses(deps: StatusRefreshDeps): Promise<StatusRe
         });
         continue;
       }
+      if (found.skipped.length > 0) incomplete = true;
       for (const s of found.skipped) {
         summary.resultRowsSkipped.push({ subject, career, rowIndex: s.rowIndex, error: s.error });
       }
 
       for (const { row } of found.rows) {
-        summary.sectionsObserved += 1;
         const status = STATUS_MAP[row.enrollment_status];
         if (status === undefined) {
+          incomplete = true;
           summary.rowsSkipped.push({
             classNbr: row.class_nbr,
             error: `unknown enrollment_status "${row.enrollment_status}"`,
           });
           continue;
         }
-        updates.push({ classNbr: row.class_nbr, status });
+        if (conflicted.has(row.class_nbr)) continue;
+        const previous = updates.get(row.class_nbr);
+        if (previous !== undefined && previous !== status) {
+          incomplete = true;
+          conflicted.add(row.class_nbr);
+          updates.delete(row.class_nbr);
+          summary.rowsSkipped.push({
+            classNbr: row.class_nbr,
+            error: `conflicting statuses "${previous}" and "${status}"`,
+          });
+          continue;
+        }
+        updates.set(row.class_nbr, status);
       }
     }
   }
 
+  summary.sectionsObserved = updates.size;
   const known = await deps.countExistingSections();
+  if (incomplete) {
+    summary.ok = false;
+    return summary;
+  }
   if (known > 0 && summary.sectionsObserved / known < deps.sanityMinRatio) {
     summary.ok = false;
     summary.abortedBySanityGate = true;
     return summary;
   }
 
-  summary.sectionsUpdated = await deps.applyUpdates(updates);
+  summary.sectionsUpdated = await deps.applyUpdates(
+    [...updates].map(([classNbr, status]) => ({ classNbr, status })),
+  );
   return summary;
 }
