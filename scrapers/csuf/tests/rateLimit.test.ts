@@ -71,3 +71,24 @@ describe('fetchWithBackoff', () => {
     expect(mockFetch).toHaveBeenCalledTimes(1);
   });
 });
+
+describe('fetchWithBackoff init forwarding', () => {
+  it('passes the init through to fetch on every attempt', async () => {
+    const seen: Array<RequestInit | undefined> = [];
+    const fetchFn = vi.fn(async (_url: string, init?: RequestInit) => {
+      seen.push(init);
+      return new Response('ok', { status: seen.length === 1 ? 500 : 200 });
+    });
+    const init: RequestInit = { method: 'POST', body: 'a=1' };
+
+    const promise = fetchWithBackoff('http://x', fetchFn, { retries: 2, baseDelayMs: 1 }, init);
+    await vi.advanceTimersByTimeAsync(1);
+
+    const res = await promise;
+
+    expect(res.status).toBe(200);
+    expect(seen).toHaveLength(2);
+    expect(seen[0]).toBe(init);
+    expect(seen[1]).toBe(init);
+  });
+});

@@ -25,10 +25,11 @@ export async function fetchWithBackoff(
   url: string,
   fetchFn: FetchLike,
   opts: BackoffOptions,
+  init?: RequestInit,
 ): Promise<Response> {
   let attempt = 0;
   for (;;) {
-    const res = await fetchFn(url);
+    const res = await fetchFn(url, init);
     if (res.ok) return res;
     const retryable = res.status === 429 || res.status >= 500;
     if (!retryable || attempt >= opts.retries) {
