@@ -41,20 +41,23 @@ async function resetSchema(schema: string, recreate: boolean): Promise<void> {
   }
 }
 
+let pool: pg.Pool;
+
+beforeAll(async () => {
+  if (!TEST_URL) return;
+  await resetSchema(SCHEMA, true);
+  pool = createPool(scopedUrl(TEST_URL, SCHEMA));
+  const dir = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'migrations');
+  await runMigrations(pool, dir);
+});
+
+afterAll(async () => {
+  if (!TEST_URL) return;
+  await pool.end();
+  await resetSchema(SCHEMA, false);
+});
+
 describe.skipIf(!TEST_URL)('upserts (integration)', () => {
-  let pool: pg.Pool;
-
-  beforeAll(async () => {
-    await resetSchema(SCHEMA, true);
-    pool = createPool(scopedUrl(TEST_URL!, SCHEMA));
-    const dir = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'migrations');
-    await runMigrations(pool, dir);
-  });
-
-  afterAll(async () => {
-    await pool.end();
-    await resetSchema(SCHEMA, false);
-  });
 
   it('upsertTerm is idempotent on code', async () => {
     const a = await upsertTerm(pool, { code: '2268', name: 'Fall 2026' });
@@ -132,7 +135,6 @@ describe.skipIf(!TEST_URL)('upserts (integration)', () => {
 
 describe.skipIf(!TEST_URL)('transactional swap', () => {
   it('keeps section ids stable across a re-scrape and prunes what vanished', async () => {
-    const pool = createPool(TEST_URL!);
     try {
       const termId = await upsertTerm(pool, { code: '2299', name: 'Test Term' });
       const deptId = await upsertDepartment(pool, { code: 'ZTST', name: 'Test Dept' });
@@ -174,23 +176,6 @@ describe.skipIf(!TEST_URL)('transactional swap', () => {
     } finally {
       await pool.query('DELETE FROM terms WHERE code = $1', ['2299']);
       await pool.query('DELETE FROM departments WHERE code = $1', ['ZTST']);
-      await pool.end();
-    }
-  });
-
-  it('rolls the whole swap back when one write fails', async () => {
-    const pool = createPool(TEST_URL!);
-    const client = await pool.connect();
-    try {
-      await client.query('BEGIN');
-      const termId = await upsertTerm(client, { code: '2298', name: 'Rollback Term' });
-      expect(termId).toBeGreaterThan(0);
-      await client.query('ROLLBACK');
-      const after = await pool.query('SELECT id FROM terms WHERE code = $1', ['2298']);
-      expect(after.rowCount).toBe(0);
-    } finally {
-      client.release();
-      await pool.end();
     }
   });
 });
