@@ -592,6 +592,26 @@ git add scrapers/csuf/src/session.ts scrapers/csuf/tests/session.test.ts
 git commit -m "feat(scraper): add PeopleSoft session with cookie jar and expiry retry"
 ```
 
+**Amendment applied during execution (commit `2f32bca`).** Running Task 5's recorder against
+the live site exposed two defects in the code above:
+
+1. `constructor(private readonly opts: SessionOptions)` is a parameter property, which emits
+   code, so `node --experimental-strip-types` — the flag every script in this package uses —
+   refuses the file. Declare `private opts: SessionOptions` and assign it in the constructor
+   body instead.
+2. The entry URL answers with a 302, and Node's `fetch` does not forward `Set-Cookie` from an
+   intermediate hop, so the session arrives without `AWSALB`/`PSJSESSIONID` and lands on the
+   login page. `Session` gained a private `fetchFollowingRedirects(url, init)` used by both
+   `open()` and `send()`: it sends `redirect: 'manual'` plus the jar's cookie header, ingests
+   `Set-Cookie` from every hop into the one existing jar, resolves `Location` with
+   `new URL(location, currentUrl)` since PeopleSoft may return a relative path, follows
+   301/302/303 as a bodyless GET and 307/308 with the original method, and throws past ten
+   hops. Because the callers no longer need to ingest cookies themselves, the `jar.ingest(res)`
+   lines in `open()` and `send()` were removed.
+
+Redirect handling belongs here rather than in each caller: the session owns the only cookie
+jar, and the CLI (Task 14) and live smoke test (Task 15) both reach the site through it.
+
 ---
 
 ### Task 5: Fixture recorder + recorded fixtures
