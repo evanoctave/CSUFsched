@@ -37,7 +37,7 @@ describe('openSession', () => {
 describe('session.post', () => {
   it('sends the envelope, ICSID, ICAction, extra fields, and the session cookie', async () => {
     const fetchFn = vi.fn(async (_url: string, init?: RequestInit) =>
-      init === undefined
+      init?.method !== 'POST'
         ? res(entryHtml('SID=='), ['CFULPRD-PSJSESSIONID=abc; Path=/; HttpOnly'])
         : res('<PAGE id="blank"></PAGE>'),
     );
@@ -102,6 +102,61 @@ describe('session.post', () => {
     const session = await openSession({ baseUrl: DEFAULT_BASE_URL, fetchFn });
 
     await expect(session.post('DO_THING')).rejects.toThrow(/session expired/i);
+  });
+});
+
+describe('redirect handling', () => {
+  it('follows a 302 and sends the cookie set on the redirect hop in the subsequent POST', async () => {
+    const redirectHeaders = new Headers();
+    redirectHeaders.set('location', DEFAULT_BASE_URL);
+    redirectHeaders.append('set-cookie', 'AWSALB=hopvalue; Path=/');
+
+    const fetchFn = vi.fn(async (_url: string, _init?: RequestInit) => {
+      const call = fetchFn.mock.calls.length;
+      // call 1: GET → 302 with AWSALB cookie
+      if (call === 1) return new Response(null, { status: 302, headers: redirectHeaders });
+      // call 2: GET redirect destination → entry page
+      if (call === 2) return res(entryHtml('SID=='));
+      // call 3+: POST actions
+      return res('<PAGE id="blank"></PAGE>');
+    });
+
+    const session = await openSession({ baseUrl: DEFAULT_BASE_URL, fetchFn });
+    await session.post('DO_THING');
+
+    // The POST (call 3) must carry the AWSALB cookie that was only set on hop 1.
+    const postInit = fetchFn.mock.calls[2][1] as RequestInit | undefined;
+    expect((postInit?.headers as Record<string, string>).cookie).toContain('AWSALB=hopvalue');
+  });
+
+  it('resolves a relative Location against the request URL', async () => {
+    const relativeLocation = '/psc/CFULPRD/EMPLOYEE/SA/c/SA_LEARNER_SERVICES.CLASS_SEARCH.GBL?public=';
+    const redirectHeaders = new Headers();
+    redirectHeaders.set('location', relativeLocation);
+
+    const fetchFn = vi.fn(async (_url: string, _init?: RequestInit) => {
+      const call = fetchFn.mock.calls.length;
+      if (call === 1) return new Response(null, { status: 302, headers: redirectHeaders });
+      return res(entryHtml());
+    });
+
+    await openSession({ baseUrl: DEFAULT_BASE_URL, fetchFn });
+
+    const expectedAbsolute = new URL(relativeLocation, DEFAULT_BASE_URL).href;
+    expect(fetchFn.mock.calls[1][0]).toBe(expectedAbsolute);
+  });
+
+  it('rejects when the redirect chain exceeds 10 hops', async () => {
+    const redirectHeaders = new Headers();
+    redirectHeaders.set('location', DEFAULT_BASE_URL);
+
+    const fetchFn = vi.fn(async (_url: string, _init?: RequestInit) =>
+      new Response(null, { status: 302, headers: redirectHeaders }),
+    );
+
+    await expect(openSession({ baseUrl: DEFAULT_BASE_URL, fetchFn })).rejects.toThrow(
+      /too many redirects/i,
+    );
   });
 });
 

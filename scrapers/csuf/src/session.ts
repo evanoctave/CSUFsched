@@ -46,16 +46,22 @@ class CookieJar {
   }
 }
 
+const MAX_REDIRECTS = 10;
+
 class Session implements PeopleSoftSession {
   entryHtml = '';
   private icsid = '';
   private stateNum = 1;
-  private jar = new CookieJar();
+  private jar: CookieJar;
+  private opts: SessionOptions;
 
-  constructor(private readonly opts: SessionOptions) {}
+  constructor(opts: SessionOptions) {
+    this.opts = opts;
+    this.jar = new CookieJar();
+  }
 
   async open(): Promise<void> {
-    const res = await this.opts.fetchFn(this.opts.baseUrl);
+    const res = await this.fetchFollowingRedirects(this.opts.baseUrl);
     const html = await res.text();
     this.jar.ingest(res);
     const icsid = readHiddenField(html, 'ICSID');
@@ -83,7 +89,7 @@ class Session implements PeopleSoftSession {
       ICAction: action,
       ...fields,
     });
-    const res = await this.opts.fetchFn(this.opts.baseUrl, {
+    const res = await this.fetchFollowingRedirects(this.opts.baseUrl, {
       method: 'POST',
       body,
       headers: {
@@ -97,6 +103,41 @@ class Session implements PeopleSoftSession {
     const echoed = readHiddenField(html, 'ICStateNum');
     this.stateNum = echoed === null ? this.stateNum + 1 : Number(echoed);
     return html;
+  }
+
+  private async fetchFollowingRedirects(url: string, init?: RequestInit): Promise<Response> {
+    let currentUrl = url;
+    let currentInit = init;
+
+    for (let hop = 0; hop < MAX_REDIRECTS; hop += 1) {
+      const cookieHeader = this.jar.header();
+      const reqInit: RequestInit = {
+        ...currentInit,
+        headers: {
+          ...(currentInit?.headers as Record<string, string> | undefined),
+          ...(cookieHeader ? { cookie: cookieHeader } : {}),
+        },
+        redirect: 'manual',
+      };
+
+      const res = await this.opts.fetchFn(currentUrl, reqInit);
+      this.jar.ingest(res);
+
+      const isRedirect = res.status >= 300 && res.status < 400;
+      if (!isRedirect) return res;
+
+      const location = res.headers.get('location');
+      if (!location) return res;
+
+      currentUrl = new URL(location, currentUrl).href;
+
+      // 301, 302, 303 → GET with no body; 307, 308 → original method + body
+      if (res.status === 301 || res.status === 302 || res.status === 303) {
+        currentInit = undefined;
+      }
+    }
+
+    throw new Error(`Too many redirects from ${url}`);
   }
 }
 

@@ -22,61 +22,9 @@ function trimToGroups(html: string, groups: number): string {
   return `${html.slice(0, cut)}\n<!-- fixture truncated after ${groups} course groups -->\n`;
 }
 
-/**
- * Node's built-in fetch does not forward cookies collected on intermediate
- * redirect hops.  PeopleSoft sets AWSALB + PSJSESSIONID on the first 302
- * response; if those are dropped the second GET lands on the login page
- * instead of the public class-search page.  This wrapper follows redirects
- * manually so every Set-Cookie header is merged into the next request.
- */
-async function fetchWithCookieRedirects(
-  url: string,
-  init?: RequestInit,
-): Promise<Response> {
-  const cookieMap = new Map<string, string>();
-
-  // Seed from any cookies already in the init headers so we don't clobber them.
-  const initCookie = (init?.headers as Record<string, string> | undefined)?.cookie ?? '';
-  for (const pair of initCookie.split(';').map((s) => s.trim()).filter(Boolean)) {
-    const eq = pair.indexOf('=');
-    if (eq > 0) cookieMap.set(pair.slice(0, eq), pair.slice(eq + 1));
-  }
-
-  let currentUrl = url;
-  const MAX_REDIRECTS = 10;
-
-  for (let hop = 0; hop < MAX_REDIRECTS; hop += 1) {
-    const cookieHeader = [...cookieMap].map(([k, v]) => `${k}=${v}`).join('; ');
-    const response = await fetch(currentUrl, {
-      ...init,
-      headers: {
-        ...(init?.headers as Record<string, string> | undefined),
-        ...(cookieHeader ? { cookie: cookieHeader } : {}),
-      },
-      redirect: 'manual',
-    });
-
-    // Ingest any cookies from this response.
-    for (const raw of response.headers.getSetCookie()) {
-      const pair = raw.split(';', 1)[0];
-      const eq = pair.indexOf('=');
-      if (eq > 0) cookieMap.set(pair.slice(0, eq).trim(), pair.slice(eq + 1).trim());
-    }
-
-    const isRedirect = response.status >= 300 && response.status < 400;
-    if (!isRedirect) return response;
-
-    const location = response.headers.get('location');
-    if (!location) return response;
-    currentUrl = location;
-  }
-
-  throw new Error(`Too many redirects from ${url}`);
-}
-
 const limited = rateLimited(
   (url: string, init?: RequestInit) =>
-    fetchWithBackoff(url, fetchWithCookieRedirects, { retries: 3, baseDelayMs: 1000 }, init),
+    fetchWithBackoff(url, fetch, { retries: 3, baseDelayMs: 1000 }, init),
   1000,
 );
 

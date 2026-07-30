@@ -9,7 +9,7 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "scrape": "node --experimental-strip-types src/run.ts",
-    "record-fixtures": "node --experimental-transform-types scripts/record-fixtures.ts"
+    "record-fixtures": "node --experimental-strip-types scripts/record-fixtures.ts"
   },
   "dependencies": {
     "@csufsched/db": "workspace:*",
