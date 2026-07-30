@@ -14,7 +14,12 @@ export type {
 } from './types.ts';
 export { rateLimited, fetchWithBackoff } from './rateLimit.ts';
 export type { FetchLike, BackoffOptions } from './rateLimit.ts';
-export { openSession, isSessionExpired, DEFAULT_BASE_URL } from './session.ts';
+export {
+  openSession,
+  isSessionExpired,
+  DEFAULT_BASE_URL,
+  SessionResetError,
+} from './session.ts';
 export type { PeopleSoftSession, SessionOptions } from './session.ts';
 export { ENVELOPE_FIELDS, buildSearchFields } from './forms.ts';
 export { parseCatalog } from './catalog.ts';

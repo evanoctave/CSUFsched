@@ -1,5 +1,10 @@
 import { describe, it, expect, vi } from 'vitest';
-import { openSession, isSessionExpired, DEFAULT_BASE_URL } from '../src/session';
+import {
+  openSession,
+  isSessionExpired,
+  DEFAULT_BASE_URL,
+  SessionResetError,
+} from '../src/session';
 
 function entryHtml(icsid = 'ABC123=', stateNum = '1'): string {
   return `<html><form name='win0'>
@@ -76,32 +81,27 @@ describe('session.post', () => {
     expect(bodyOf(calls[3][1]).get('ICStateNum')).toBe('8');
   });
 
-  it('reopens the session once and retries when the response is an expiry page', async () => {
+  it('reopens on expiry but never replays the stateful action', async () => {
     const replies = [
       res(entryHtml('OLD==')),
       res('<html>Your session has timed out.</html>'),
       res(entryHtml('NEW==')),
-      res('<PAGE id="blank">good</PAGE>'),
     ];
     let i = 0;
     const fetchFn = vi.fn(async (_url: string, _init?: RequestInit) => replies[i++]);
     const session = await openSession({ baseUrl: DEFAULT_BASE_URL, fetchFn });
+    const initialGeneration = session.generation;
 
-    const html = await session.post('DO_THING');
+    await expect(session.post('#ICSave')).rejects.toBeInstanceOf(SessionResetError);
 
-    expect(html).toContain('good');
-    expect(fetchFn).toHaveBeenCalledTimes(4);
-    expect(bodyOf(fetchFn.mock.calls[3][1]).get('ICSID')).toBe('NEW==');
+    expect(fetchFn).toHaveBeenCalledTimes(3);
+    expect(session.generation).toBe(initialGeneration + 1);
   });
 
-  it('throws when the retry after a reopen also expires', async () => {
-    const expired = 'Your session has expired.';
-    const replies = [res(entryHtml()), res(expired), res(entryHtml()), res(expired)];
-    let i = 0;
-    const fetchFn = vi.fn(async (_url: string, _init?: RequestInit) => replies[i++]);
+  it('starts generation at one after the initial open', async () => {
+    const fetchFn = vi.fn(async () => res(entryHtml()));
     const session = await openSession({ baseUrl: DEFAULT_BASE_URL, fetchFn });
-
-    await expect(session.post('DO_THING')).rejects.toThrow(/session expired/i);
+    expect(session.generation).toBe(1);
   });
 });
 

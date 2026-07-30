@@ -14,7 +14,15 @@ export interface SessionOptions {
 
 export interface PeopleSoftSession {
   readonly entryHtml: string;
+  readonly generation: number;
   post(action: string, fields?: Record<string, string>): Promise<string>;
+}
+
+export class SessionResetError extends Error {
+  constructor(public readonly action: string) {
+    super(`session reset while performing action ${action}`);
+    this.name = 'SessionResetError';
+  }
 }
 
 export function isSessionExpired(html: string): boolean {
@@ -50,6 +58,7 @@ const MAX_REDIRECTS = 10;
 
 class Session implements PeopleSoftSession {
   entryHtml = '';
+  generation = 0;
   private icsid = '';
   private stateNum = 1;
   private jar: CookieJar;
@@ -68,6 +77,7 @@ class Session implements PeopleSoftSession {
     this.icsid = icsid;
     this.stateNum = Number(readHiddenField(html, 'ICStateNum') ?? '1');
     this.entryHtml = html;
+    this.generation += 1;
   }
 
   async post(action: string, fields: Record<string, string> = {}): Promise<string> {
@@ -75,9 +85,7 @@ class Session implements PeopleSoftSession {
     if (!isSessionExpired(html)) return html;
 
     await this.open();
-    const retry = await this.send(action, fields);
-    if (isSessionExpired(retry)) throw new Error(`session expired twice on action ${action}`);
-    return retry;
+    throw new SessionResetError(action);
   }
 
   private async send(action: string, fields: Record<string, string>): Promise<string> {

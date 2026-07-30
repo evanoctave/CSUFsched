@@ -1,6 +1,6 @@
 import { buildSearchFields } from './forms.ts';
 import { parseResultRows } from './parseResults.ts';
-import type { PeopleSoftSession } from './session.ts';
+import { SessionResetError, type PeopleSoftSession } from './session.ts';
 import type { ResultRow, SearchCriteria } from './types.ts';
 
 export const SEARCH_ACTION = 'CLASS_SRCH_WRK2_SSR_PB_CLASS_SRCH';
@@ -52,14 +52,27 @@ export function makeSearcher(
   session: PeopleSoftSession,
 ): (criteria: SearchCriteria) => Promise<SearchOutcome> {
   let needsReset = false;
-  return async (criteria) => {
-    if (needsReset) await resetSearch(session);
-    // Assume the worst until runSearch says otherwise: a thrown search leaves
-    // the session on an unknown page, and skipping the reset makes PeopleSoft
-    // replay the previous result set into the next subject.
+  let resultsGeneration = session.generation;
+
+  const attempt = async (criteria: SearchCriteria): Promise<SearchOutcome> => {
+    if (needsReset) {
+      if (session.generation === resultsGeneration) await resetSearch(session);
+      needsReset = false;
+    }
     needsReset = true;
     const html = await runSearch(session, criteria);
     needsReset = html !== null;
+    resultsGeneration = session.generation;
     return html === null ? { rows: [], skipped: [] } : parseResultRows(html);
+  };
+
+  return async (criteria) => {
+    try {
+      return await attempt(criteria);
+    } catch (err) {
+      if (!(err instanceof SessionResetError)) throw err;
+      needsReset = false;
+      return attempt(criteria);
+    }
   };
 }

@@ -12,6 +12,7 @@ import {
   WARNING_CONTINUE_ACTION,
   NEW_SEARCH_ACTION,
 } from '../src/searchPage';
+import { SessionResetError } from '../src/session';
 
 const dir = path.join(path.dirname(fileURLToPath(import.meta.url)), 'fixtures');
 const warning = fs.readFileSync(path.join(dir, 'warning.html'), 'utf8');
@@ -114,5 +115,88 @@ describe('makeSearcher', () => {
     await search({ ...criteria, subject: 'MATH' });
 
     expect(actions(post)).toEqual([SEARCH_ACTION, NEW_SEARCH_ACTION, SEARCH_ACTION]);
+  });
+
+  it('retries the whole search once after expiry during warning continuation', async () => {
+    let generation = 1;
+    let call = 0;
+    const post = vi.fn(async (action: string) => {
+      call += 1;
+      if (call === 1) return warning;
+      if (call === 2) {
+        generation = 2;
+        throw new SessionResetError(action);
+      }
+      return results;
+    });
+    const session = {
+      entryHtml: '',
+      get generation() {
+        return generation;
+      },
+      post,
+    };
+
+    const outcome = await makeSearcher(session)(criteria);
+
+    expect(outcome.rows.length).toBeGreaterThan(0);
+    expect(actions(session.post)).toEqual([
+      SEARCH_ACTION,
+      WARNING_CONTINUE_ACTION,
+      SEARCH_ACTION,
+    ]);
+  });
+
+  it('retries from entry after expiry during new-search reset', async () => {
+    const session = {
+      entryHtml: '',
+      generation: 1,
+      post: vi.fn().mockResolvedValue(results),
+    };
+    const search = makeSearcher(session);
+    await search(criteria);
+    session.post.mockImplementationOnce(async (action: string) => {
+      session.generation = 2;
+      throw new SessionResetError(action);
+    });
+
+    await search({ ...criteria, subject: 'MATH' });
+
+    expect(actions(session.post)).toEqual([
+      SEARCH_ACTION,
+      NEW_SEARCH_ACTION,
+      SEARCH_ACTION,
+    ]);
+  });
+
+  it('skips new-search when a detail action already reopened the session', async () => {
+    const session = {
+      entryHtml: '',
+      generation: 1,
+      post: vi.fn().mockResolvedValue(results),
+    };
+    const search = makeSearcher(session);
+    await search(criteria);
+
+    session.generation = 2;
+    await search({ ...criteria, subject: 'MATH' });
+
+    expect(actions(session.post)).toEqual([SEARCH_ACTION, SEARCH_ACTION]);
+  });
+
+  it('propagates a second session reset', async () => {
+    const session = {
+      entryHtml: '',
+      generation: 1,
+      post: vi.fn(async (action: string) => {
+        session.generation += 1;
+        throw new SessionResetError(action);
+      }),
+    };
+
+    await expect(makeSearcher(session)(criteria)).rejects.toBeInstanceOf(
+      SessionResetError,
+    );
+    expect(session.post).toHaveBeenCalledTimes(2);
   });
 });
