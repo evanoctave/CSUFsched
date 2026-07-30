@@ -20,12 +20,11 @@ function bodyOf(init: RequestInit | undefined): URLSearchParams {
 
 describe('openSession', () => {
   it('GETs the entry page, extracts ICSID, and starts at state 1', async () => {
-    const fetchFn = vi.fn(async () => res(entryHtml('SID=='), ['CFULPRD-PSJSESSIONID=abc; Path=/']));
+    const fetchFn = vi.fn(async (_url: string, _init?: RequestInit) => res(entryHtml('SID=='), ['CFULPRD-PSJSESSIONID=abc; Path=/']));
     const session = await openSession({ baseUrl: DEFAULT_BASE_URL, fetchFn });
 
     expect(fetchFn).toHaveBeenCalledTimes(1);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    expect((fetchFn.mock.calls as any)[0][0]).toBe(DEFAULT_BASE_URL);
+    expect(fetchFn.mock.calls[0][0]).toBe(DEFAULT_BASE_URL);
     expect(session.entryHtml).toContain('ICSID');
   });
 
@@ -45,8 +44,7 @@ describe('session.post', () => {
     const session = await openSession({ baseUrl: DEFAULT_BASE_URL, fetchFn });
     await session.post('DO_THING', { A: 'b' });
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const init = (fetchFn.mock.calls as any)[1][1] as RequestInit | undefined;
+    const init = fetchFn.mock.calls[1][1] as RequestInit | undefined;
     const body = bodyOf(init);
     expect(init?.method).toBe('POST');
     expect((init?.headers as Record<string, string>).cookie).toContain('CFULPRD-PSJSESSIONID=abc');
@@ -65,15 +63,14 @@ describe('session.post', () => {
       res(`<PAGE id='x'/>`),
     ];
     let i = 0;
-    const fetchFn = vi.fn(async () => replies[i++]);
+    const fetchFn = vi.fn(async (_url: string, _init?: RequestInit) => replies[i++]);
     const session = await openSession({ baseUrl: DEFAULT_BASE_URL, fetchFn });
 
     await session.post('A');
     await session.post('B');
     await session.post('C');
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const calls = fetchFn.mock.calls as any;
+    const calls = fetchFn.mock.calls;
     expect(bodyOf(calls[1][1]).get('ICStateNum')).toBe('1');
     expect(bodyOf(calls[2][1]).get('ICStateNum')).toBe('7');
     expect(bodyOf(calls[3][1]).get('ICStateNum')).toBe('8');
@@ -87,22 +84,21 @@ describe('session.post', () => {
       res('<PAGE id="blank">good</PAGE>'),
     ];
     let i = 0;
-    const fetchFn = vi.fn(async () => replies[i++]);
+    const fetchFn = vi.fn(async (_url: string, _init?: RequestInit) => replies[i++]);
     const session = await openSession({ baseUrl: DEFAULT_BASE_URL, fetchFn });
 
     const html = await session.post('DO_THING');
 
     expect(html).toContain('good');
     expect(fetchFn).toHaveBeenCalledTimes(4);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    expect(bodyOf((fetchFn.mock.calls as any)[3][1]).get('ICSID')).toBe('NEW==');
+    expect(bodyOf(fetchFn.mock.calls[3][1]).get('ICSID')).toBe('NEW==');
   });
 
   it('throws when the retry after a reopen also expires', async () => {
     const expired = 'Your session has expired.';
     const replies = [res(entryHtml()), res(expired), res(entryHtml()), res(expired)];
     let i = 0;
-    const fetchFn = vi.fn(async () => replies[i++]);
+    const fetchFn = vi.fn(async (_url: string, _init?: RequestInit) => replies[i++]);
     const session = await openSession({ baseUrl: DEFAULT_BASE_URL, fetchFn });
 
     await expect(session.post('DO_THING')).rejects.toThrow(/session expired/i);
