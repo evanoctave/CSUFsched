@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, type MockedFunction } from 'vitest';
 import { refreshStatuses } from '../src/statusRefresh';
+import type { SearchOutcome } from '../src/searchPage';
 import type { RawClassRow, ResultRow, SearchCriteria } from '../src/types';
 
 function resultRow(rowIndex: number, classNbr: string, status: string): ResultRow {
@@ -12,11 +13,15 @@ function resultRow(rowIndex: number, classNbr: string, status: string): ResultRo
   return { rowIndex, row };
 }
 
+function outcome(rows: ResultRow[], skipped: SearchOutcome['skipped'] = []): SearchOutcome {
+  return { rows, skipped };
+}
+
 interface TestDeps {
   termCode: string;
   subjects: string[];
   careers: string[];
-  search: MockedFunction<(criteria: SearchCriteria) => Promise<ResultRow[]>>;
+  search: MockedFunction<(criteria: SearchCriteria) => Promise<SearchOutcome>>;
   countExistingSections: MockedFunction<() => Promise<number>>;
   applyUpdates: MockedFunction<(updates: Array<{ classNbr: string; status: string }>) => Promise<number>>;
   sanityMinRatio: number;
@@ -27,8 +32,8 @@ function deps(over: Partial<TestDeps> = {}): TestDeps {
     termCode: '2267',
     subjects: ['CPSC', 'MATH'],
     careers: ['UGRD'],
-    search: vi.fn<(criteria: SearchCriteria) => Promise<ResultRow[]>>(
-      async () => [resultRow(0, '12345', 'O'), resultRow(1, '12346', 'W')],
+    search: vi.fn<(criteria: SearchCriteria) => Promise<SearchOutcome>>(
+      async () => outcome([resultRow(0, '12345', 'O'), resultRow(1, '12346', 'W')]),
     ),
     countExistingSections: vi.fn<() => Promise<number>>(async () => 4),
     applyUpdates: vi.fn<(updates: Array<{ classNbr: string; status: string }>) => Promise<number>>(async () => 2),
@@ -57,7 +62,9 @@ describe('refreshStatuses', () => {
 
   it('skips a row whose status icon is unknown and reports it', async () => {
     const d = deps({
-      search: vi.fn<(criteria: SearchCriteria) => Promise<ResultRow[]>>(async () => [resultRow(0, '12345', 'X')]),
+      search: vi.fn<(criteria: SearchCriteria) => Promise<SearchOutcome>>(
+        async () => outcome([resultRow(0, '12345', 'X')]),
+      ),
       subjects: ['CPSC'],
       countExistingSections: vi.fn<() => Promise<number>>(async () => 1),
     });
@@ -65,6 +72,21 @@ describe('refreshStatuses', () => {
 
     expect(summary.rowsSkipped).toHaveLength(1);
     expect(d.applyUpdates).toHaveBeenCalledWith([]);
+  });
+
+  it('reports the result rows the HTML parser skipped', async () => {
+    const d = deps({
+      subjects: ['CPSC'],
+      search: vi.fn<(criteria: SearchCriteria) => Promise<SearchOutcome>>(
+        async () => outcome([resultRow(0, '12345', 'O')], [{ rowIndex: 7, error: 'field MTG_ROOM$7 not found' }]),
+      ),
+      countExistingSections: vi.fn<() => Promise<number>>(async () => 1),
+    });
+    const summary = await refreshStatuses(d);
+
+    expect(summary.resultRowsSkipped).toEqual([
+      { subject: 'CPSC', career: 'UGRD', rowIndex: 7, error: 'field MTG_ROOM$7 not found' },
+    ]);
   });
 
   it('aborts without writing when it observes too few sections', async () => {
@@ -79,9 +101,9 @@ describe('refreshStatuses', () => {
   it('records a failed search and keeps going', async () => {
     const d = deps({
       search: vi
-        .fn<(criteria: SearchCriteria) => Promise<ResultRow[]>>()
+        .fn<(criteria: SearchCriteria) => Promise<SearchOutcome>>()
         .mockRejectedValueOnce(new Error('boom'))
-        .mockResolvedValueOnce([resultRow(0, '12345', 'C')]),
+        .mockResolvedValueOnce(outcome([resultRow(0, '12345', 'C')])),
       countExistingSections: vi.fn<() => Promise<number>>(async () => 1),
     });
     const summary = await refreshStatuses(d);

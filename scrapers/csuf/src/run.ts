@@ -1,4 +1,5 @@
 import { parseClassRows } from './parse.ts';
+import type { SearchOutcome } from './searchPage.ts';
 import type {
   Catalog,
   PersistInput,
@@ -9,7 +10,7 @@ import type {
 
 export interface FullScrapeDeps {
   catalog: Catalog;
-  search: (criteria: SearchCriteria) => Promise<ResultRow[]>;
+  search: (criteria: SearchCriteria) => Promise<SearchOutcome>;
   fetchUnits: (rowIndex: number) => Promise<string>;
   countExistingSections: (termCode: string) => Promise<number>;
   persist: (input: PersistInput) => Promise<PersistResult>;
@@ -33,6 +34,13 @@ export interface ScrapeSummary {
   searchErrors: Array<{ term: string; subject: string; career: string; error: string }>;
   detailErrors: Array<{ course: string; error: string }>;
   rowsSkipped: Array<{ row: unknown; error: string }>;
+  resultRowsSkipped: Array<{
+    term: string;
+    subject: string;
+    career: string;
+    rowIndex: number;
+    error: string;
+  }>;
 }
 
 function message(err: unknown): string {
@@ -48,6 +56,7 @@ export async function runFullScrape(deps: FullScrapeDeps): Promise<ScrapeSummary
     searchErrors: [],
     detailErrors: [],
     rowsSkipped: [],
+    resultRowsSkipped: [],
   };
 
   const terms = deps.termCodes
@@ -64,7 +73,7 @@ export async function runFullScrape(deps: FullScrapeDeps): Promise<ScrapeSummary
     for (const subject of deps.catalog.subjects) {
       for (const career of deps.catalog.careers) {
         const criteria = { termCode: term.code, subject: subject.code, career: career.code };
-        let found: ResultRow[];
+        let found: SearchOutcome;
         try {
           found = await deps.search(criteria);
         } catch (err) {
@@ -77,8 +86,17 @@ export async function runFullScrape(deps: FullScrapeDeps): Promise<ScrapeSummary
           continue;
         }
         summary.searchesRun += 1;
+        for (const s of found.skipped) {
+          summary.resultRowsSkipped.push({
+            term: term.code,
+            subject: subject.code,
+            career: career.code,
+            rowIndex: s.rowIndex,
+            error: s.error,
+          });
+        }
 
-        for (const result of found) {
+        for (const result of found.rows) {
           const key = `${result.row.subject} ${result.row.catalog_nbr}`;
           if (!unitsByCourse.has(key)) {
             try {

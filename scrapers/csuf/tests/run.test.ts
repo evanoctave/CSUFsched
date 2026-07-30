@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, type MockedFunction } from 'vitest';
 import { runFullScrape } from '../src/run';
+import type { SearchOutcome } from '../src/searchPage';
 import type { RawClassRow, ResultRow, PersistInput, PersistResult, SearchCriteria } from '../src/types';
 
 function row(overrides: Partial<RawClassRow> = {}): RawClassRow {
@@ -26,9 +27,13 @@ function resultRow(rowIndex: number, overrides: Partial<RawClassRow> = {}): Resu
   return { rowIndex, row: row(overrides) };
 }
 
+function outcome(rows: ResultRow[], skipped: SearchOutcome['skipped'] = []): SearchOutcome {
+  return { rows, skipped };
+}
+
 interface TestDeps {
   catalog: Parameters<typeof runFullScrape>[0]['catalog'];
-  search: MockedFunction<(criteria: SearchCriteria) => Promise<ResultRow[]>>;
+  search: MockedFunction<(criteria: SearchCriteria) => Promise<SearchOutcome>>;
   fetchUnits: MockedFunction<(rowIndex: number) => Promise<string>>;
   countExistingSections: MockedFunction<(termCode: string) => Promise<number>>;
   persist: MockedFunction<(input: PersistInput) => Promise<PersistResult>>;
@@ -43,8 +48,8 @@ function deps(over: Partial<TestDeps> = {}): TestDeps {
       subjects: [{ code: 'CPSC', name: 'Computer Science' }],
       careers: [{ code: 'UGRD', name: 'Undergraduate' }],
     },
-    search: vi.fn<(criteria: SearchCriteria) => Promise<ResultRow[]>>(
-      async () => [resultRow(0), resultRow(1, { class_nbr: '12346', class_section: '02' })],
+    search: vi.fn<(criteria: SearchCriteria) => Promise<SearchOutcome>>(
+      async () => outcome([resultRow(0), resultRow(1, { class_nbr: '12346', class_section: '02' })]),
     ),
     fetchUnits: vi.fn<(rowIndex: number) => Promise<string>>(async () => '3'),
     countExistingSections: vi.fn<(termCode: string) => Promise<number>>(async () => 0),
@@ -110,12 +115,31 @@ describe('runFullScrape', () => {
       search: vi
         .fn()
         .mockRejectedValueOnce(new Error('boom'))
-        .mockResolvedValueOnce([resultRow(0, { subject: 'MATH', catalog_nbr: '150B' })]),
+        .mockResolvedValueOnce(outcome([resultRow(0, { subject: 'MATH', catalog_nbr: '150B' })])),
     });
     const summary = await runFullScrape(d);
 
     expect(summary.searchErrors).toEqual([{ term: '2267', subject: 'CPSC', career: 'UGRD', error: 'boom' }]);
     expect(d.persist).toHaveBeenCalledTimes(1);
+  });
+
+  it('reports the result rows the HTML parser skipped', async () => {
+    const d = deps({
+      search: vi.fn<(criteria: SearchCriteria) => Promise<SearchOutcome>>(
+        async () => outcome([resultRow(0)], [{ rowIndex: 4, error: 'unknown instruction mode "Zoom"' }]),
+      ),
+    });
+    const summary = await runFullScrape(d);
+
+    expect(summary.resultRowsSkipped).toEqual([
+      {
+        term: '2267',
+        subject: 'CPSC',
+        career: 'UGRD',
+        rowIndex: 4,
+        error: 'unknown instruction mode "Zoom"',
+      },
+    ]);
   });
 
   it('records a failed detail fetch and skips that course', async () => {

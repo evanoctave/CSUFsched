@@ -1,4 +1,5 @@
-import type { ResultRow, SearchCriteria } from './types.ts';
+import type { SearchOutcome } from './searchPage.ts';
+import type { SearchCriteria } from './types.ts';
 
 const STATUS_MAP: Record<string, string> = { O: 'open', C: 'closed', W: 'waitlist' };
 
@@ -6,7 +7,7 @@ export interface StatusRefreshDeps {
   termCode: string;
   subjects: string[];
   careers: string[];
-  search: (criteria: SearchCriteria) => Promise<ResultRow[]>;
+  search: (criteria: SearchCriteria) => Promise<SearchOutcome>;
   countExistingSections: () => Promise<number>;
   applyUpdates: (updates: Array<{ classNbr: string; status: string }>) => Promise<number>;
   sanityMinRatio: number;
@@ -19,6 +20,7 @@ export interface StatusRefreshSummary {
   abortedBySanityGate: boolean;
   searchErrors: Array<{ subject: string; career: string; error: string }>;
   rowsSkipped: Array<{ classNbr: string; error: string }>;
+  resultRowsSkipped: Array<{ subject: string; career: string; rowIndex: number; error: string }>;
 }
 
 export async function refreshStatuses(deps: StatusRefreshDeps): Promise<StatusRefreshSummary> {
@@ -29,13 +31,14 @@ export async function refreshStatuses(deps: StatusRefreshDeps): Promise<StatusRe
     abortedBySanityGate: false,
     searchErrors: [],
     rowsSkipped: [],
+    resultRowsSkipped: [],
   };
 
   const updates: Array<{ classNbr: string; status: string }> = [];
 
   for (const subject of deps.subjects) {
     for (const career of deps.careers) {
-      let found: ResultRow[];
+      let found: SearchOutcome;
       try {
         found = await deps.search({ termCode: deps.termCode, subject, career });
       } catch (err) {
@@ -46,8 +49,11 @@ export async function refreshStatuses(deps: StatusRefreshDeps): Promise<StatusRe
         });
         continue;
       }
+      for (const s of found.skipped) {
+        summary.resultRowsSkipped.push({ subject, career, rowIndex: s.rowIndex, error: s.error });
+      }
 
-      for (const { row } of found) {
+      for (const { row } of found.rows) {
         summary.sectionsObserved += 1;
         const status = STATUS_MAP[row.enrollment_status];
         if (status === undefined) {

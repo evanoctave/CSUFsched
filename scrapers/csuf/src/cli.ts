@@ -1,14 +1,12 @@
 import { createPool, countSectionsForTerm, updateSectionStatuses, upsertTerm } from '@csufsched/db';
 import { openSession, DEFAULT_BASE_URL } from './session.ts';
 import { parseCatalog } from './catalog.ts';
-import { runSearch, resetSearch } from './searchPage.ts';
-import { parseResultRows } from './parseResults.ts';
+import { makeSearcher } from './searchPage.ts';
 import { fetchUnits } from './detail.ts';
 import { persistTerm } from './persist.ts';
 import { runFullScrape } from './run.ts';
 import { refreshStatuses } from './statusRefresh.ts';
 import { rateLimited, fetchWithBackoff } from './rateLimit.ts';
-import type { ResultRow, SearchCriteria } from './types.ts';
 
 function required(name: string): string {
   const value = process.env[name];
@@ -40,18 +38,7 @@ async function main(): Promise<void> {
   const session = await openSession({ baseUrl, fetchFn: limited });
   const catalog = parseCatalog(session.entryHtml);
 
-  // Detail fetches return to the results page themselves, so the only extra
-  // navigation is resetting the previous search before opening the next one.
-  let searchOpen = false;
-  const search = async (criteria: SearchCriteria): Promise<ResultRow[]> => {
-    if (searchOpen) {
-      await resetSearch(session);
-      searchOpen = false;
-    }
-    const html = await runSearch(session, criteria);
-    searchOpen = html !== null;
-    return html === null ? [] : parseResultRows(html).rows;
-  };
+  const search = makeSearcher(session);
 
   const sectionsForTerm = async (termCode: string): Promise<number> => {
     const res = await pool.query('SELECT id FROM terms WHERE code = $1', [termCode]);
