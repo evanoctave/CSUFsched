@@ -102,7 +102,7 @@ describe('runFullScrape', () => {
     expect(d.persist.mock.calls[0][0].departmentNames.get('CPSC')).toBe('Computer Science');
   });
 
-  it('records a failed search and keeps going', async () => {
+  it('runs remaining searches but persists nothing after one search fails', async () => {
     const d = deps({
       catalog: {
         terms: [{ code: '2267', name: 'Fall 2026' }],
@@ -119,8 +119,17 @@ describe('runFullScrape', () => {
     });
     const summary = await runFullScrape(d);
 
-    expect(summary.searchErrors).toEqual([{ term: '2267', subject: 'CPSC', career: 'UGRD', error: 'boom' }]);
-    expect(d.persist).toHaveBeenCalledTimes(1);
+    expect(d.search).toHaveBeenCalledTimes(2);
+    expect(d.persist).not.toHaveBeenCalled();
+    expect(summary.ok).toBe(false);
+    expect(summary.searchErrors).toEqual([
+      { term: '2267', subject: 'CPSC', career: 'UGRD', error: 'boom' },
+    ]);
+    expect(summary.terms[0]).toMatchObject({
+      abortedByErrors: true,
+      abortedBySanityGate: false,
+      persisted: null,
+    });
   });
 
   it('reports the result rows the HTML parser skipped', async () => {
@@ -142,13 +151,48 @@ describe('runFullScrape', () => {
     ]);
   });
 
-  it('records a failed detail fetch and skips that course', async () => {
-    const d = deps({ fetchUnits: vi.fn<(rowIndex: number) => Promise<string>>(async () => { throw new Error('detail down'); }) });
+  it('persists nothing when the HTML parser skipped a result row', async () => {
+    const d = deps({
+      search: vi.fn<(criteria: SearchCriteria) => Promise<SearchOutcome>>(
+        async () => outcome([resultRow(0)], [{ rowIndex: 4, error: 'missing room' }]),
+      ),
+      countExistingSections: vi.fn<(termCode: string) => Promise<number>>(async () => 0),
+    });
+
     const summary = await runFullScrape(d);
 
+    expect(d.persist).not.toHaveBeenCalled();
+    expect(summary.ok).toBe(false);
+    expect(summary.terms[0].abortedByErrors).toBe(true);
+  });
+
+  it('persists nothing when parseClassRows skips a malformed row', async () => {
+    const d = deps({
+      search: vi.fn<(criteria: SearchCriteria) => Promise<SearchOutcome>>(
+        async () => outcome([resultRow(0, { meeting_days: 'Monday' })]),
+      ),
+      countExistingSections: vi.fn<(termCode: string) => Promise<number>>(async () => 0),
+    });
+
+    const summary = await runFullScrape(d);
+
+    expect(d.persist).not.toHaveBeenCalled();
+    expect(summary.rowsSkipped).toHaveLength(1);
+    expect(summary.terms[0].abortedByErrors).toBe(true);
+  });
+
+  it('persists nothing when a detail fetch fails', async () => {
+    const d = deps({
+      fetchUnits: vi.fn<(rowIndex: number) => Promise<string>>(async () => {
+        throw new Error('detail down');
+      }),
+      countExistingSections: vi.fn<(termCode: string) => Promise<number>>(async () => 0),
+    });
+    const summary = await runFullScrape(d);
+
+    expect(d.persist).not.toHaveBeenCalled();
     expect(summary.detailErrors).toHaveLength(1);
-    expect(summary.detailErrors[0].course).toBe('CPSC 121');
-    expect(d.persist.mock.calls[0][0].courses).toHaveLength(0);
+    expect(summary.terms[0].abortedByErrors).toBe(true);
   });
 
   it('aborts the term without writing when the sanity ratio is not met', async () => {

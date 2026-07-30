@@ -1,5 +1,6 @@
 import { parseClassRows } from './parse.ts';
 import type { SearchOutcome } from './searchPage.ts';
+import { selectTerms } from './validation.ts';
 import type {
   Catalog,
   PersistInput,
@@ -22,6 +23,7 @@ export interface TermSummary {
   termCode: string;
   sectionsParsed: number;
   sectionsBefore: number;
+  abortedByErrors: boolean;
   abortedBySanityGate: boolean;
   persisted: PersistResult | null;
 }
@@ -59,12 +61,11 @@ export async function runFullScrape(deps: FullScrapeDeps): Promise<ScrapeSummary
     resultRowsSkipped: [],
   };
 
-  const terms = deps.termCodes
-    ? deps.catalog.terms.filter((t) => deps.termCodes?.includes(t.code))
-    : deps.catalog.terms;
+  const terms = selectTerms(deps.catalog, deps.termCodes);
   const departmentNames = new Map(deps.catalog.subjects.map((s) => [s.code, s.name]));
 
   for (const term of terms) {
+    let incomplete = false;
     // Units are a course attribute, so one detail fetch serves every section and
     // every career that offers the course.
     const unitsByCourse = new Map<string, string>();
@@ -77,6 +78,7 @@ export async function runFullScrape(deps: FullScrapeDeps): Promise<ScrapeSummary
         try {
           found = await deps.search(criteria);
         } catch (err) {
+          incomplete = true;
           summary.searchErrors.push({
             term: term.code,
             subject: subject.code,
@@ -86,6 +88,7 @@ export async function runFullScrape(deps: FullScrapeDeps): Promise<ScrapeSummary
           continue;
         }
         summary.searchesRun += 1;
+        if (found.skipped.length > 0) incomplete = true;
         for (const s of found.skipped) {
           summary.resultRowsSkipped.push({
             term: term.code,
@@ -102,6 +105,7 @@ export async function runFullScrape(deps: FullScrapeDeps): Promise<ScrapeSummary
             try {
               unitsByCourse.set(key, await deps.fetchUnits(result.rowIndex));
             } catch (err) {
+              incomplete = true;
               summary.detailErrors.push({ course: key, error: message(err) });
               unitsByCourse.set(key, '');
             }
@@ -116,10 +120,25 @@ export async function runFullScrape(deps: FullScrapeDeps): Promise<ScrapeSummary
       .filter((r) => r.units !== '');
     const { courses, skipped } = parseClassRows(withUnits);
     summary.rowsSkipped.push(...skipped);
+    if (skipped.length > 0) incomplete = true;
 
     const sectionsParsed = courses.reduce((n, c) => n + c.sections.length, 0);
     summary.sectionsParsed += sectionsParsed;
     const sectionsBefore = await deps.countExistingSections(term.code);
+
+    if (incomplete) {
+      summary.ok = false;
+      summary.terms.push({
+        termCode: term.code,
+        sectionsParsed,
+        sectionsBefore,
+        abortedByErrors: true,
+        abortedBySanityGate: false,
+        persisted: null,
+      });
+      continue;
+    }
+
     const gatePassed = sectionsBefore === 0 || sectionsParsed / sectionsBefore >= deps.sanityMinRatio;
 
     if (!gatePassed) {
@@ -128,6 +147,7 @@ export async function runFullScrape(deps: FullScrapeDeps): Promise<ScrapeSummary
         termCode: term.code,
         sectionsParsed,
         sectionsBefore,
+        abortedByErrors: false,
         abortedBySanityGate: true,
         persisted: null,
       });
@@ -144,6 +164,7 @@ export async function runFullScrape(deps: FullScrapeDeps): Promise<ScrapeSummary
       termCode: term.code,
       sectionsParsed,
       sectionsBefore,
+      abortedByErrors: false,
       abortedBySanityGate: false,
       persisted,
     });
