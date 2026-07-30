@@ -18,6 +18,14 @@ export { openSession, isSessionExpired, DEFAULT_BASE_URL } from './session.ts';
 export type { PeopleSoftSession, SessionOptions } from './session.ts';
 export { ENVELOPE_FIELDS, buildSearchFields } from './forms.ts';
 export { parseCatalog } from './catalog.ts';
+export {
+  parseNonNegativeNumber,
+  parseRatio,
+  parseTermCodes,
+  validateCatalog,
+  selectTerms,
+  requireCatalogTerm,
+} from './validation.ts';
 export { parseResultRows } from './parseResults.ts';
 export { fetchUnits, parseUnitsRange } from './detail.ts';
 export { runSearch, resetSearch, makeSearcher } from './searchPage.ts';
