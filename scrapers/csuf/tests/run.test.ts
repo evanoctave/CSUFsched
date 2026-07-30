@@ -1,13 +1,13 @@
-import { describe, it, expect, vi } from 'vitest';
-import { scrapeTerm } from '../src/run';
-import type { RawClassRow } from '../src/types';
+import { describe, it, expect, vi, type MockedFunction } from 'vitest';
+import { runFullScrape } from '../src/run';
+import type { RawClassRow, ResultRow, PersistInput, PersistResult, SearchCriteria } from '../src/types';
 
-function row(overrides: Partial<RawClassRow>): RawClassRow {
+function row(overrides: Partial<RawClassRow> = {}): RawClassRow {
   return {
     subject: 'CPSC',
     catalog_nbr: '121',
     descr: 'OOP',
-    units: '3',
+    units: '',
     class_nbr: '12345',
     class_section: '01',
     instructor: 'Lee,J',
@@ -22,68 +22,142 @@ function row(overrides: Partial<RawClassRow>): RawClassRow {
   };
 }
 
-describe('scrapeTerm', () => {
-  it('fetches each department, persists parsed courses, and reports a summary', async () => {
-    const fetchRows = vi
-      .fn()
-      .mockResolvedValueOnce([row({}), row({ class_nbr: '12346', class_section: '02' })])
-      .mockResolvedValueOnce([row({ subject: 'MATH', catalog_nbr: '150B', descr: 'Calc II', units: '4', class_nbr: '20001' })]);
-    const persistCourse = vi.fn().mockResolvedValue(undefined);
+function resultRow(rowIndex: number, overrides: Partial<RawClassRow> = {}): ResultRow {
+  return { rowIndex, row: row(overrides) };
+}
 
-    const summary = await scrapeTerm({
-      departments: ['CPSC', 'MATH'],
-      fetchRows,
-      persistCourse,
+interface TestDeps {
+  catalog: Parameters<typeof runFullScrape>[0]['catalog'];
+  search: MockedFunction<(criteria: SearchCriteria) => Promise<ResultRow[]>>;
+  fetchUnits: MockedFunction<(rowIndex: number) => Promise<string>>;
+  countExistingSections: MockedFunction<(termCode: string) => Promise<number>>;
+  persist: MockedFunction<(input: PersistInput) => Promise<PersistResult>>;
+  sanityMinRatio: number;
+  termCodes?: string[];
+}
+
+function deps(over: Partial<TestDeps> = {}): TestDeps {
+  return {
+    catalog: {
+      terms: [{ code: '2267', name: 'Fall 2026' }],
+      subjects: [{ code: 'CPSC', name: 'Computer Science' }],
+      careers: [{ code: 'UGRD', name: 'Undergraduate' }],
+    },
+    search: vi.fn<(criteria: SearchCriteria) => Promise<ResultRow[]>>(
+      async () => [resultRow(0), resultRow(1, { class_nbr: '12346', class_section: '02' })],
+    ),
+    fetchUnits: vi.fn<(rowIndex: number) => Promise<string>>(async () => '3'),
+    countExistingSections: vi.fn<(termCode: string) => Promise<number>>(async () => 0),
+    persist: vi.fn<(input: PersistInput) => Promise<PersistResult>>(async () => ({
+      termId: 1, coursesUpserted: 1, sectionsUpserted: 2, coursesDeleted: 0, sectionsDeleted: 0,
+    })),
+    sanityMinRatio: 0.9,
+    ...over,
+  };
+}
+
+describe('runFullScrape', () => {
+  it('searches every term x subject x career and persists the parsed courses', async () => {
+    const d = deps();
+    const summary = await runFullScrape(d);
+
+    expect(d.search).toHaveBeenCalledWith({ termCode: '2267', subject: 'CPSC', career: 'UGRD' });
+    expect(d.persist).toHaveBeenCalledTimes(1);
+    expect(summary.searchesRun).toBe(1);
+    expect(summary.sectionsParsed).toBe(2);
+    expect(summary.terms[0].persisted?.sectionsUpserted).toBe(2);
+  });
+
+  it('fetches one detail page per course, not per section', async () => {
+    const d = deps();
+    await runFullScrape(d);
+    expect(d.fetchUnits).toHaveBeenCalledTimes(1);
+    expect(d.fetchUnits).toHaveBeenCalledWith(0);
+  });
+
+  it('reuses the cached units when the same course appears under another career', async () => {
+    const d = deps({
+      catalog: {
+        terms: [{ code: '2267', name: 'Fall 2026' }],
+        subjects: [{ code: 'CPSC', name: 'Computer Science' }],
+        careers: [
+          { code: 'UGRD', name: 'Undergraduate' },
+          { code: 'PBAC', name: 'Postbaccalaureate' },
+        ],
+      },
     });
-
-    expect(fetchRows).toHaveBeenCalledWith('CPSC');
-    expect(fetchRows).toHaveBeenCalledWith('MATH');
-    expect(persistCourse).toHaveBeenCalledTimes(2);
-    expect(summary.departmentsScraped).toBe(2);
-    expect(summary.coursesPersisted).toBe(2);
-    expect(summary.rowsSkipped).toHaveLength(0);
-    expect(summary.departmentErrors).toHaveLength(0);
+    await runFullScrape(d);
+    expect(d.search).toHaveBeenCalledTimes(2);
+    expect(d.fetchUnits).toHaveBeenCalledTimes(1);
   });
 
-  it('a department fetch failure is recorded, not thrown, and other departments continue', async () => {
-    const fetchRows = vi
-      .fn()
-      .mockRejectedValueOnce(new Error('boom'))
-      .mockResolvedValueOnce([row({})]);
-    const persistCourse = vi.fn().mockResolvedValue(undefined);
-
-    const summary = await scrapeTerm({ departments: ['CPSC', 'MATH'], fetchRows, persistCourse });
-
-    expect(summary.departmentErrors).toEqual([{ dept: 'CPSC', error: 'boom' }]);
-    expect(summary.coursesPersisted).toBe(1);
+  it('passes real department names through to persist', async () => {
+    const d = deps();
+    await runFullScrape(d);
+    expect(d.persist.mock.calls[0][0].departmentNames.get('CPSC')).toBe('Computer Science');
   });
 
-  it('a persist failure for one course is recorded and does not abort the run', async () => {
-    const fetchRows = vi
-      .fn()
-      .mockResolvedValueOnce([
-        row({}),
-        row({ catalog_nbr: '131', descr: 'Data Structures', class_nbr: '12400' }),
-      ]);
-    const persistCourse = vi
-      .fn()
-      .mockRejectedValueOnce(new Error('db down'))
-      .mockResolvedValueOnce(undefined);
+  it('records a failed search and keeps going', async () => {
+    const d = deps({
+      catalog: {
+        terms: [{ code: '2267', name: 'Fall 2026' }],
+        subjects: [
+          { code: 'CPSC', name: 'Computer Science' },
+          { code: 'MATH', name: 'Mathematics' },
+        ],
+        careers: [{ code: 'UGRD', name: 'Undergraduate' }],
+      },
+      search: vi
+        .fn()
+        .mockRejectedValueOnce(new Error('boom'))
+        .mockResolvedValueOnce([resultRow(0, { subject: 'MATH', catalog_nbr: '150B' })]),
+    });
+    const summary = await runFullScrape(d);
 
-    const summary = await scrapeTerm({ departments: ['CPSC'], fetchRows, persistCourse });
-
-    expect(summary.coursesPersisted).toBe(1);
-    expect(summary.courseErrors).toEqual([{ course: 'CPSC 121', error: 'db down' }]);
+    expect(summary.searchErrors).toEqual([{ term: '2267', subject: 'CPSC', career: 'UGRD', error: 'boom' }]);
+    expect(d.persist).toHaveBeenCalledTimes(1);
   });
 
-  it('malformed rows surface in rowsSkipped', async () => {
-    const fetchRows = vi.fn().mockResolvedValueOnce([row({ meeting_days: 'MoXx' })]);
-    const persistCourse = vi.fn();
+  it('records a failed detail fetch and skips that course', async () => {
+    const d = deps({ fetchUnits: vi.fn<(rowIndex: number) => Promise<string>>(async () => { throw new Error('detail down'); }) });
+    const summary = await runFullScrape(d);
 
-    const summary = await scrapeTerm({ departments: ['CPSC'], fetchRows, persistCourse });
+    expect(summary.detailErrors).toHaveLength(1);
+    expect(summary.detailErrors[0].course).toBe('CPSC 121');
+    expect(d.persist.mock.calls[0][0].courses).toHaveLength(0);
+  });
 
-    expect(summary.rowsSkipped).toHaveLength(1);
-    expect(summary.rowsSkipped[0].error).toMatch(/unrecognized/i);
-    expect(persistCourse).not.toHaveBeenCalled();
+  it('aborts the term without writing when the sanity ratio is not met', async () => {
+    const d = deps({ countExistingSections: vi.fn<(termCode: string) => Promise<number>>(async () => 100) });
+    const summary = await runFullScrape(d);
+
+    expect(d.persist).not.toHaveBeenCalled();
+    expect(summary.terms[0].abortedBySanityGate).toBe(true);
+    expect(summary.ok).toBe(false);
+  });
+
+  it('passes the gate on a first run against an empty database', async () => {
+    const d = deps({ countExistingSections: vi.fn<(termCode: string) => Promise<number>>(async () => 0) });
+    const summary = await runFullScrape(d);
+
+    expect(d.persist).toHaveBeenCalledTimes(1);
+    expect(summary.ok).toBe(true);
+  });
+
+  it('honours a term filter', async () => {
+    const d = deps({
+      catalog: {
+        terms: [
+          { code: '2267', name: 'Fall 2026' },
+          { code: '2265', name: 'Summer 2026' },
+        ],
+        subjects: [{ code: 'CPSC', name: 'Computer Science' }],
+        careers: [{ code: 'UGRD', name: 'Undergraduate' }],
+      },
+      termCodes: ['2265'],
+    });
+    await runFullScrape(d);
+    expect(d.search).toHaveBeenCalledTimes(1);
+    expect(d.search.mock.calls[0][0].termCode).toBe('2265');
   });
 });

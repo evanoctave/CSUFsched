@@ -1,138 +1,135 @@
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import {
-  createPool,
-  upsertTerm,
-  upsertDepartment,
-  upsertCourse,
-  upsertSection,
-  replaceMeetings,
-  upsertProfessor,
-} from '@csufsched/db';
 import { parseClassRows } from './parse.ts';
-import { rateLimited, fetchWithBackoff } from './rateLimit.ts';
-import type { RawClassRow, ScrapedCourse } from './types.ts';
+import type {
+  Catalog,
+  PersistInput,
+  PersistResult,
+  ResultRow,
+  SearchCriteria,
+} from './types.ts';
+
+export interface FullScrapeDeps {
+  catalog: Catalog;
+  search: (criteria: SearchCriteria) => Promise<ResultRow[]>;
+  fetchUnits: (rowIndex: number) => Promise<string>;
+  countExistingSections: (termCode: string) => Promise<number>;
+  persist: (input: PersistInput) => Promise<PersistResult>;
+  sanityMinRatio: number;
+  termCodes?: string[];
+}
+
+export interface TermSummary {
+  termCode: string;
+  sectionsParsed: number;
+  sectionsBefore: number;
+  abortedBySanityGate: boolean;
+  persisted: PersistResult | null;
+}
 
 export interface ScrapeSummary {
-  departmentsScraped: number;
-  coursesPersisted: number;
-  rowsSkipped: Array<{ row: RawClassRow; error: string }>;
-  departmentErrors: Array<{ dept: string; error: string }>;
-  courseErrors: Array<{ course: string; error: string }>;
+  ok: boolean;
+  searchesRun: number;
+  sectionsParsed: number;
+  terms: TermSummary[];
+  searchErrors: Array<{ term: string; subject: string; career: string; error: string }>;
+  detailErrors: Array<{ course: string; error: string }>;
+  rowsSkipped: Array<{ row: unknown; error: string }>;
 }
 
-export interface ScrapeTermOptions {
-  departments: string[];
-  fetchRows: (dept: string) => Promise<RawClassRow[]>;
-  persistCourse: (course: ScrapedCourse) => Promise<void>;
+function message(err: unknown): string {
+  return err instanceof Error ? err.message : String(err);
 }
 
-export async function scrapeTerm(opts: ScrapeTermOptions): Promise<ScrapeSummary> {
+export async function runFullScrape(deps: FullScrapeDeps): Promise<ScrapeSummary> {
   const summary: ScrapeSummary = {
-    departmentsScraped: 0,
-    coursesPersisted: 0,
+    ok: true,
+    searchesRun: 0,
+    sectionsParsed: 0,
+    terms: [],
+    searchErrors: [],
+    detailErrors: [],
     rowsSkipped: [],
-    departmentErrors: [],
-    courseErrors: [],
   };
 
-  for (const dept of opts.departments) {
-    let rows: RawClassRow[];
-    try {
-      rows = await opts.fetchRows(dept);
-    } catch (err) {
-      summary.departmentErrors.push({
-        dept,
-        error: err instanceof Error ? err.message : String(err),
+  const terms = deps.termCodes
+    ? deps.catalog.terms.filter((t) => deps.termCodes?.includes(t.code))
+    : deps.catalog.terms;
+  const departmentNames = new Map(deps.catalog.subjects.map((s) => [s.code, s.name]));
+
+  for (const term of terms) {
+    // Units are a course attribute, so one detail fetch serves every section and
+    // every career that offers the course.
+    const unitsByCourse = new Map<string, string>();
+    const rows: ResultRow[] = [];
+
+    for (const subject of deps.catalog.subjects) {
+      for (const career of deps.catalog.careers) {
+        const criteria = { termCode: term.code, subject: subject.code, career: career.code };
+        let found: ResultRow[];
+        try {
+          found = await deps.search(criteria);
+        } catch (err) {
+          summary.searchErrors.push({
+            term: term.code,
+            subject: subject.code,
+            career: career.code,
+            error: message(err),
+          });
+          continue;
+        }
+        summary.searchesRun += 1;
+
+        for (const result of found) {
+          const key = `${result.row.subject} ${result.row.catalog_nbr}`;
+          if (!unitsByCourse.has(key)) {
+            try {
+              unitsByCourse.set(key, await deps.fetchUnits(result.rowIndex));
+            } catch (err) {
+              summary.detailErrors.push({ course: key, error: message(err) });
+              unitsByCourse.set(key, '');
+            }
+          }
+          rows.push(result);
+        }
+      }
+    }
+
+    const withUnits = rows
+      .map((r) => ({ ...r.row, units: unitsByCourse.get(`${r.row.subject} ${r.row.catalog_nbr}`) ?? '' }))
+      .filter((r) => r.units !== '');
+    const { courses, skipped } = parseClassRows(withUnits);
+    summary.rowsSkipped.push(...skipped);
+
+    const sectionsParsed = courses.reduce((n, c) => n + c.sections.length, 0);
+    summary.sectionsParsed += sectionsParsed;
+    const sectionsBefore = await deps.countExistingSections(term.code);
+    const gatePassed = sectionsBefore === 0 || sectionsParsed / sectionsBefore >= deps.sanityMinRatio;
+
+    if (!gatePassed) {
+      summary.ok = false;
+      summary.terms.push({
+        termCode: term.code,
+        sectionsParsed,
+        sectionsBefore,
+        abortedBySanityGate: true,
+        persisted: null,
       });
       continue;
     }
-    summary.departmentsScraped += 1;
 
-    const { courses, skipped } = parseClassRows(rows);
-    summary.rowsSkipped.push(...skipped);
-
-    for (const course of courses) {
-      try {
-        await opts.persistCourse(course);
-        summary.coursesPersisted += 1;
-      } catch (err) {
-        summary.courseErrors.push({
-          course: `${course.deptCode} ${course.catalogNbr}`,
-          error: err instanceof Error ? err.message : String(err),
-        });
-      }
-    }
+    const persisted = await deps.persist({
+      termCode: term.code,
+      termName: term.name,
+      departmentNames,
+      courses,
+    });
+    summary.terms.push({
+      termCode: term.code,
+      sectionsParsed,
+      sectionsBefore,
+      abortedBySanityGate: false,
+      persisted,
+    });
   }
 
   return summary;
-}
-
-const isCli = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
-if (isCli) {
-  const databaseUrl = process.env.DATABASE_URL;
-  const searchUrl = process.env.CSUF_SEARCH_URL;
-  const termCode = process.env.TERM_CODE;
-  const termName = process.env.TERM_NAME ?? termCode;
-  const departments = (process.env.DEPARTMENTS ?? '').split(',').filter(Boolean);
-  if (!databaseUrl || !searchUrl || !termCode || departments.length === 0) {
-    console.error('Required env: DATABASE_URL, CSUF_SEARCH_URL, TERM_CODE, DEPARTMENTS (comma-separated)');
-    process.exit(1);
-  }
-
-  const pool = createPool(databaseUrl);
-  const limitedFetch = rateLimited(
-    (url: string) => fetchWithBackoff(url, fetch, { retries: 3, baseDelayMs: 1000 }),
-    1000,
-  );
-
-  const fetchRows = async (dept: string): Promise<RawClassRow[]> => {
-    const url = `${searchUrl}?term=${encodeURIComponent(termCode)}&subject=${encodeURIComponent(dept)}`;
-    const res = await limitedFetch(url);
-    return (await res.json()) as RawClassRow[];
-  };
-
-  const run = async (): Promise<void> => {
-    const termId = await upsertTerm(pool, { code: termCode, name: termName ?? termCode });
-    const deptIds = new Map<string, number>();
-
-    const persistCourse = async (course: ScrapedCourse): Promise<void> => {
-      let deptId = deptIds.get(course.deptCode);
-      if (deptId === undefined) {
-        deptId = await upsertDepartment(pool, { code: course.deptCode, name: course.deptCode });
-        deptIds.set(course.deptCode, deptId);
-      }
-      const courseId = await upsertCourse(pool, {
-        termId,
-        deptId,
-        catalogNbr: course.catalogNbr,
-        title: course.title,
-        units: course.units,
-        description: null,
-      });
-      for (const s of course.sections) {
-        const instructorId =
-          s.instructorName === null ? null : await upsertProfessor(pool, { fullName: s.instructorName });
-        const sectionId = await upsertSection(pool, {
-          courseId,
-          classNbr: s.classNbr,
-          sectionCode: s.sectionCode,
-          instructorId,
-          mode: s.mode,
-          enrollmentStatus: s.enrollmentStatus,
-        });
-        await replaceMeetings(pool, sectionId, s.meetings);
-      }
-    };
-
-    const summary = await scrapeTerm({ departments, fetchRows, persistCourse });
-    console.log(JSON.stringify(summary, null, 2));
-  };
-
-  run()
-    .then(() => pool.end())
-    .catch((err) => {
-      console.error(err);
-      process.exit(1);
-    });
 }
