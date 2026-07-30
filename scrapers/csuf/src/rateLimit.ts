@@ -30,7 +30,9 @@ export async function fetchWithBackoff(
   let attempt = 0;
   for (;;) {
     const res = await fetchFn(url, init);
-    if (res.ok) return res;
+    // Redirects belong to the caller: Session fetches with `redirect: 'manual'`
+    // so it can carry the cookie jar across hops itself.
+    if (res.ok || (res.status >= 300 && res.status < 400)) return res;
     const retryable = res.status === 429 || res.status >= 500;
     if (!retryable || attempt >= opts.retries) {
       throw new Error(`fetch failed: ${res.status} ${url}`);

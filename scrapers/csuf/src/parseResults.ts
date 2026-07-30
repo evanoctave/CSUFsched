@@ -1,7 +1,7 @@
 import { decodeEntities } from './catalog.ts';
 import type { RawClassRow, ResultRow } from './types.ts';
 
-const NO_MEETING = new Set(['', 'TBA', 'Asynchronous']);
+const NO_MEETING = new Set(['', 'TBA', 'To Be Arranged', 'Asynchronous']);
 const NO_ROOM = new Set(['', 'TBA', 'Online']);
 
 export function parseDayTime(raw: string): { days: string; start: string; end: string } {

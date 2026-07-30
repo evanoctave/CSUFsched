@@ -18,8 +18,8 @@ describe('parseDayTime', () => {
     });
   });
 
-  it('treats Asynchronous, TBA, and blank as no meeting', () => {
-    for (const raw of ['Asynchronous', 'TBA', '']) {
+  it('treats Asynchronous, TBA, To Be Arranged, and blank as no meeting', () => {
+    for (const raw of ['Asynchronous', 'TBA', 'To Be Arranged', '']) {
       expect(parseDayTime(raw)).toEqual({ days: '', start: '', end: '' });
     }
   });

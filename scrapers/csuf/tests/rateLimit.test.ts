@@ -63,6 +63,15 @@ describe('fetchWithBackoff', () => {
     expect(mockFetch).toHaveBeenCalledTimes(3); // initial + 2 retries
   });
 
+  it('hands 3xx back to the caller instead of throwing', async () => {
+    const mockFetch = vi.fn().mockResolvedValue(
+      new Response('', { status: 302, headers: { location: '/elsewhere' } }),
+    );
+    const res = await fetchWithBackoff('https://x.test/a', mockFetch, { retries: 3, baseDelayMs: 100 });
+    expect(res.status).toBe(302);
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+  });
+
   it('does not retry 4xx other than 429', async () => {
     const mockFetch = vi.fn().mockResolvedValue(new Response('gone', { status: 404 }));
     await expect(
