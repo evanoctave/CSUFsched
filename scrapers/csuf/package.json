@@ -8,7 +8,8 @@
   "scripts": {
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "scrape": "node --experimental-strip-types src/run.ts",
+    "scrape:full": "node --experimental-strip-types src/cli.ts full",
+    "scrape:status": "node --experimental-strip-types src/cli.ts status",
     "record-fixtures": "node --experimental-strip-types scripts/record-fixtures.ts"
   },
   "dependencies": {
