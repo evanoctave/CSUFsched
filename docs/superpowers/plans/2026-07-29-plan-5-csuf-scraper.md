@@ -792,10 +792,14 @@ describe('parseCatalog', () => {
   });
 
   it('decodes HTML entities in option labels', () => {
-    const html = `<select name='SSR_CLSRCH_WRK_SUBJECT_SRCH$0'>
-      <option value="">&nbsp;</option>
-      <option value="ACCT">Accounting &amp; Finance</option>
-    </select>`;
+    // All three dropdowns are present because parseCatalog requires every one of them.
+    const html = `
+      <select name='CLASS_SRCH_WRK2_STRM$35$'><option value="2267">Fall 2026</option></select>
+      <select name='SSR_CLSRCH_WRK_SUBJECT_SRCH$0'>
+        <option value="">&nbsp;</option>
+        <option value="ACCT">Accounting &amp; Finance</option>
+      </select>
+      <select name='SSR_CLSRCH_WRK_ACAD_CAREER$2'><option value="UGRD">Undergraduate</option></select>`;
     expect(parseCatalog(html).subjects).toEqual([{ code: 'ACCT', name: 'Accounting & Finance' }]);
   });
 
