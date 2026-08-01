@@ -97,7 +97,7 @@ describe('refreshStatuses', () => {
     expect(summary.ok).toBe(false);
   });
 
-  it('runs remaining searches but applies nothing after one search fails', async () => {
+  it('applies what it observed after one search fails', async () => {
     const d = deps({
       search: vi
         .fn<(criteria: SearchCriteria) => Promise<SearchOutcome>>()
@@ -108,7 +108,7 @@ describe('refreshStatuses', () => {
     const summary = await refreshStatuses(d);
 
     expect(d.search).toHaveBeenCalledTimes(2);
-    expect(d.applyUpdates).not.toHaveBeenCalled();
+    expect(d.applyUpdates).toHaveBeenCalledWith([{ classNbr: '12345', status: 'closed' }]);
     expect(summary.ok).toBe(false);
     expect(summary.searchErrors).toEqual([
       { subject: 'CPSC', career: 'UGRD', error: 'boom' },
@@ -151,7 +151,7 @@ describe('refreshStatuses', () => {
     expect(d.applyUpdates).not.toHaveBeenCalled();
   });
 
-  it('applies nothing after an HTML result row is skipped', async () => {
+  it('applies the surviving rows after an HTML result row is skipped', async () => {
     const d = deps({
       subjects: ['CPSC'],
       search: vi.fn<(criteria: SearchCriteria) => Promise<SearchOutcome>>(
@@ -165,6 +165,6 @@ describe('refreshStatuses', () => {
     const summary = await refreshStatuses(d);
 
     expect(summary.ok).toBe(false);
-    expect(d.applyUpdates).not.toHaveBeenCalled();
+    expect(d.applyUpdates).toHaveBeenCalledWith([{ classNbr: '12345', status: 'open' }]);
   });
 });

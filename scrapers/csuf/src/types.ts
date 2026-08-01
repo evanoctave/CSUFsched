@@ -70,6 +70,11 @@ export interface PersistInput {
   termName: string;
   departmentNames: Map<string, string>;
   courses: ScrapedCourse[];
+  // Pruning is the only destructive step, and a section deleted here comes back
+  // tomorrow with a fresh id, breaking every share link that named it. A scrape
+  // that lost rows to an error cannot tell "cancelled" from "never seen", so it
+  // refreshes what it did observe and leaves the rest alone.
+  prune: boolean;
 }
 
 export interface PersistResult {

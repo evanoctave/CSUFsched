@@ -44,7 +44,7 @@ const MODE_MAP: Record<string, ScrapedSection['mode']> = {
   HY: 'hybrid',
 };
 
-const STATUS_MAP: Record<string, ScrapedSection['enrollmentStatus']> = {
+export const STATUS_MAP: Record<string, ScrapedSection['enrollmentStatus']> = {
   O: 'open',
   C: 'closed',
   W: 'waitlist',

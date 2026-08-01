@@ -16,6 +16,9 @@ export interface PeopleSoftSession {
   readonly entryHtml: string;
   readonly generation: number;
   post(action: string, fields?: Record<string, string>): Promise<string>;
+  // Navigation is stateful, so a caller that cannot return the server to a known
+  // page has no way back except starting over.
+  reopen(): Promise<void>;
 }
 
 export class SessionResetError extends Error {
@@ -72,8 +75,14 @@ class Session implements PeopleSoftSession {
     this.jar = new CookieJar();
   }
 
+  reopen(): Promise<void> {
+    return this.open();
+  }
+
   async open(): Promise<void> {
-    const res = await this.fetchFollowingRedirects(this.opts.baseUrl);
+    const res = await this.fetchFollowingRedirects(this.opts.baseUrl, {
+      headers: { 'user-agent': USER_AGENT },
+    });
     const html = await res.text();
     const icsid = readHiddenField(html, 'ICSID');
     if (icsid === null) throw new Error('entry page carried no ICSID');
@@ -140,9 +149,11 @@ class Session implements PeopleSoftSession {
 
       currentUrl = new URL(location, currentUrl).href;
 
-      // 301, 302, 303 → GET with no body; 307, 308 → original method + body
+      // 301, 302, 303 → GET with no body; 307, 308 → original method + body.
+      // The user-agent has to survive the downgrade: PeopleSoft serves a
+      // different page to clients it does not recognize as browsers.
       if (res.status === 301 || res.status === 302 || res.status === 303) {
-        currentInit = undefined;
+        currentInit = { headers: { 'user-agent': USER_AGENT } };
       }
     }
 

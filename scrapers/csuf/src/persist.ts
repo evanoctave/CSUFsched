@@ -66,8 +66,12 @@ export async function persistTerm(pool: Pool, input: PersistInput): Promise<Pers
       }
     }
 
-    const sectionsDeleted = await deleteSectionsNotIn(client, termId, keptSectionIds);
-    const coursesDeleted = await deleteCoursesNotIn(client, termId, keptCourseIds);
+    const sectionsDeleted = input.prune
+      ? await deleteSectionsNotIn(client, termId, keptSectionIds)
+      : 0;
+    const coursesDeleted = input.prune
+      ? await deleteCoursesNotIn(client, termId, keptCourseIds)
+      : 0;
 
     await client.query('COMMIT');
     return {

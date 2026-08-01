@@ -3,6 +3,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, it, expect, vi } from 'vitest';
 import { parseUnitsRange, detailAction, fetchUnits, DETAIL_BACK_ACTION } from '../src/detail';
+import { SessionResetError } from '../src/session';
 
 const detailHtml = fs.readFileSync(
   path.join(path.dirname(fileURLToPath(import.meta.url)), 'fixtures', 'detail.html'),
@@ -50,5 +51,38 @@ describe('fetchUnits', () => {
     await expect(fetchUnits({ post } as never, 1)).rejects.toThrow(/units/i);
     expect(post).toHaveBeenCalledTimes(2);
     expect(post.mock.calls[1][0]).toBe(DETAIL_BACK_ACTION);
+  });
+
+  it('keeps the units it parsed and reopens when the back navigation fails', async () => {
+    const post = vi
+      .fn()
+      .mockResolvedValueOnce(`<span id='SSR_CLS_DTL_WRK_UNITS_RANGE'>3 units</span>`)
+      .mockRejectedValueOnce(new Error('network down'));
+    const reopen = vi.fn(async () => {});
+
+    expect(await fetchUnits({ post, reopen } as never, 4)).toBe('3');
+    expect(reopen).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not reopen when the back navigation already reset the session', async () => {
+    const post = vi
+      .fn()
+      .mockResolvedValueOnce(`<span id='SSR_CLS_DTL_WRK_UNITS_RANGE'>3 units</span>`)
+      .mockRejectedValueOnce(new SessionResetError(DETAIL_BACK_ACTION));
+    const reopen = vi.fn(async () => {});
+
+    expect(await fetchUnits({ post, reopen } as never, 4)).toBe('3');
+    expect(reopen).not.toHaveBeenCalled();
+  });
+
+  it('reports the parse failure when the back navigation fails too', async () => {
+    const post = vi
+      .fn()
+      .mockResolvedValueOnce('<html>unexpected</html>')
+      .mockRejectedValueOnce(new Error('network down'));
+    const reopen = vi.fn(async () => {});
+
+    await expect(fetchUnits({ post, reopen } as never, 1)).rejects.toThrow(/units/i);
+    expect(reopen).toHaveBeenCalledTimes(1);
   });
 });

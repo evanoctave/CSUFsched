@@ -102,7 +102,7 @@ describe('runFullScrape', () => {
     expect(d.persist.mock.calls[0][0].departmentNames.get('CPSC')).toBe('Computer Science');
   });
 
-  it('runs remaining searches but persists nothing after one search fails', async () => {
+  it('refreshes without pruning after one search fails', async () => {
     const d = deps({
       catalog: {
         terms: [{ code: '2267', name: 'Fall 2026' }],
@@ -120,16 +120,13 @@ describe('runFullScrape', () => {
     const summary = await runFullScrape(d);
 
     expect(d.search).toHaveBeenCalledTimes(2);
-    expect(d.persist).not.toHaveBeenCalled();
+    expect(d.persist).toHaveBeenCalledTimes(1);
+    expect(d.persist.mock.calls[0][0].prune).toBe(false);
     expect(summary.ok).toBe(false);
     expect(summary.searchErrors).toEqual([
       { term: '2267', subject: 'CPSC', career: 'UGRD', error: 'boom' },
     ]);
-    expect(summary.terms[0]).toMatchObject({
-      abortedByErrors: true,
-      abortedBySanityGate: false,
-      persisted: null,
-    });
+    expect(summary.terms[0]).toMatchObject({ pruned: false, abortedBySanityGate: false });
   });
 
   it('reports the result rows the HTML parser skipped', async () => {
@@ -151,37 +148,60 @@ describe('runFullScrape', () => {
     ]);
   });
 
-  it('persists nothing when the HTML parser skipped a result row', async () => {
+  it('refreshes without pruning when the HTML parser skipped a result row', async () => {
     const d = deps({
       search: vi.fn<(criteria: SearchCriteria) => Promise<SearchOutcome>>(
         async () => outcome([resultRow(0)], [{ rowIndex: 4, error: 'missing room' }]),
       ),
-      countExistingSections: vi.fn<(termCode: string) => Promise<number>>(async () => 0),
     });
 
     const summary = await runFullScrape(d);
 
-    expect(d.persist).not.toHaveBeenCalled();
+    expect(d.persist.mock.calls[0][0].prune).toBe(false);
     expect(summary.ok).toBe(false);
-    expect(summary.terms[0].abortedByErrors).toBe(true);
+    expect(summary.terms[0].pruned).toBe(false);
   });
 
-  it('persists nothing when parseClassRows skips a malformed row', async () => {
+  it('refreshes without pruning when parseClassRows skips a malformed row', async () => {
     const d = deps({
       search: vi.fn<(criteria: SearchCriteria) => Promise<SearchOutcome>>(
-        async () => outcome([resultRow(0, { meeting_days: 'Monday' })]),
+        async () =>
+          outcome([resultRow(0), resultRow(1, { class_nbr: '12346', meeting_days: 'Monday' })]),
       ),
-      countExistingSections: vi.fn<(termCode: string) => Promise<number>>(async () => 0),
     });
 
     const summary = await runFullScrape(d);
 
-    expect(d.persist).not.toHaveBeenCalled();
     expect(summary.rowsSkipped).toHaveLength(1);
-    expect(summary.terms[0].abortedByErrors).toBe(true);
+    expect(d.persist.mock.calls[0][0].prune).toBe(false);
+    expect(summary.terms[0].pruned).toBe(false);
   });
 
-  it('persists nothing when a detail fetch fails', async () => {
+  it('prunes only when the term was scraped cleanly', async () => {
+    const d = deps();
+    const summary = await runFullScrape(d);
+
+    expect(d.persist.mock.calls[0][0].prune).toBe(true);
+    expect(summary.ok).toBe(true);
+    expect(summary.terms[0].pruned).toBe(true);
+  });
+
+  it('retries a failed detail fetch on a later row of the same course', async () => {
+    const d = deps({
+      fetchUnits: vi
+        .fn<(rowIndex: number) => Promise<string>>()
+        .mockRejectedValueOnce(new Error('detail down'))
+        .mockResolvedValueOnce('3'),
+    });
+    const summary = await runFullScrape(d);
+
+    expect(d.fetchUnits).toHaveBeenCalledTimes(2);
+    expect(summary.detailErrors).toHaveLength(1);
+    expect(summary.coursesMissingUnits).toEqual([]);
+    expect(summary.terms[0].persisted?.sectionsUpserted).toBe(2);
+  });
+
+  it('gives up on a course after two failed detail fetches and skips it', async () => {
     const d = deps({
       fetchUnits: vi.fn<(rowIndex: number) => Promise<string>>(async () => {
         throw new Error('detail down');
@@ -190,9 +210,11 @@ describe('runFullScrape', () => {
     });
     const summary = await runFullScrape(d);
 
+    expect(d.fetchUnits).toHaveBeenCalledTimes(2);
+    expect(summary.detailErrors).toHaveLength(2);
+    expect(summary.coursesMissingUnits).toEqual(['CPSC 121']);
     expect(d.persist).not.toHaveBeenCalled();
-    expect(summary.detailErrors).toHaveLength(1);
-    expect(summary.terms[0].abortedByErrors).toBe(true);
+    expect(summary.terms[0].abortedBySanityGate).toBe(true);
   });
 
   it('aborts the term without writing when the sanity ratio is not met', async () => {

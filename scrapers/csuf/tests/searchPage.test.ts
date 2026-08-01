@@ -135,6 +135,7 @@ describe('makeSearcher', () => {
         return generation;
       },
       post,
+      reopen: vi.fn(async () => {}),
     };
 
     const outcome = await makeSearcher(session)(criteria);
@@ -152,6 +153,7 @@ describe('makeSearcher', () => {
       entryHtml: '',
       generation: 1,
       post: vi.fn().mockResolvedValue(results),
+      reopen: vi.fn(async () => {}),
     };
     const search = makeSearcher(session);
     await search(criteria);
@@ -174,6 +176,7 @@ describe('makeSearcher', () => {
       entryHtml: '',
       generation: 1,
       post: vi.fn().mockResolvedValue(results),
+      reopen: vi.fn(async () => {}),
     };
     const search = makeSearcher(session);
     await search(criteria);
@@ -192,6 +195,7 @@ describe('makeSearcher', () => {
         session.generation += 1;
         throw new SessionResetError(action);
       }),
+      reopen: vi.fn(async () => {}),
     };
 
     await expect(makeSearcher(session)(criteria)).rejects.toBeInstanceOf(

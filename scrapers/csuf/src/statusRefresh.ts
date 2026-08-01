@@ -1,7 +1,6 @@
+import { STATUS_MAP } from './parse.ts';
 import type { SearchOutcome } from './searchPage.ts';
 import type { SearchCriteria } from './types.ts';
-
-const STATUS_MAP: Record<string, string> = { O: 'open', C: 'closed', W: 'waitlist' };
 
 export interface StatusRefreshDeps {
   termCode: string;
@@ -84,12 +83,13 @@ export async function refreshStatuses(deps: StatusRefreshDeps): Promise<StatusRe
     }
   }
 
+  // Distinct, because `known` counts sections while a course offered under two
+  // careers produces two rows.
   summary.sectionsObserved = updates.size;
   const known = await deps.countExistingSections();
-  if (incomplete) {
-    summary.ok = false;
-    return summary;
-  }
+  // A status update deletes nothing and is idempotent, so partial input is
+  // still worth applying: every observation in it was really seen.
+  if (incomplete) summary.ok = false;
   if (known > 0 && summary.sectionsObserved / known < deps.sanityMinRatio) {
     summary.ok = false;
     summary.abortedBySanityGate = true;

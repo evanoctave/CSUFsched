@@ -75,6 +75,7 @@ describe.skipIf(!TEST_URL)('persistTerm (integration)', () => {
         termName: 'Test Term',
         departmentNames: new Map([['ZTST', 'Test Dept']]),
         courses: [course(), course({ catalogNbr: '102', title: 'Second' })],
+        prune: true,
       });
       expect(first.coursesUpserted).toBe(2);
       expect(first.sectionsUpserted).toBe(2);
@@ -102,6 +103,7 @@ describe.skipIf(!TEST_URL)('persistTerm (integration)', () => {
             ],
           }),
         ],
+        prune: true,
       });
 
       const after = await pool.query(
@@ -126,6 +128,43 @@ describe.skipIf(!TEST_URL)('persistTerm (integration)', () => {
     }
   });
 
+  it('refreshes without deleting anything when prune is off', async () => {
+    const pool = createPool(scopedUrl(TEST_URL!, SCHEMA));
+    try {
+      await persistTerm(pool, {
+        termCode: '2298',
+        termName: 'Partial Term',
+        departmentNames: new Map([['ZTST', 'Test Dept']]),
+        courses: [course(), course({ catalogNbr: '102', title: 'Second' })],
+        prune: true,
+      });
+
+      const second = await persistTerm(pool, {
+        termCode: '2298',
+        termName: 'Partial Term',
+        departmentNames: new Map([['ZTST', 'Test Dept']]),
+        courses: [course({ title: 'Intro Revised' })],
+        prune: false,
+      });
+
+      expect(second.coursesDeleted).toBe(0);
+      expect(second.sectionsDeleted).toBe(0);
+
+      const kept = await pool.query(
+        `SELECT c.catalog_nbr, c.title FROM courses c JOIN terms t ON t.id = c.term_id
+         WHERE t.code = '2298' ORDER BY c.catalog_nbr`,
+      );
+      expect(kept.rows.map((r) => r.catalog_nbr)).toEqual(['101', '102']);
+      expect(kept.rows[0].title).toBe('Intro Revised');
+    } finally {
+      await pool.query(`DELETE FROM courses WHERE term_id IN (SELECT id FROM terms WHERE code = '2298')`);
+      await pool.query(`DELETE FROM terms WHERE code = '2298'`);
+      await pool.query(`DELETE FROM departments WHERE code = 'ZTST'`);
+      await pool.query(`DELETE FROM professors WHERE full_name = 'Ada Lovelace'`);
+      await pool.end();
+    }
+  });
+
   it('leaves the previous catalog untouched when a write fails mid-run', async () => {
     const pool = createPool(scopedUrl(TEST_URL!, SCHEMA));
     try {
@@ -134,6 +173,7 @@ describe.skipIf(!TEST_URL)('persistTerm (integration)', () => {
         termName: 'Rollback Term',
         departmentNames: new Map([['ZTST', 'Test Dept']]),
         courses: [course()],
+        prune: true,
       });
 
       // title is NOT NULL, so this write fails inside the transaction
@@ -144,6 +184,7 @@ describe.skipIf(!TEST_URL)('persistTerm (integration)', () => {
           termName: 'Rollback Term',
           departmentNames: new Map([['ZTST', 'Test Dept']]),
           courses: [course(), bad],
+          prune: true,
         }),
       ).rejects.toThrow();
 

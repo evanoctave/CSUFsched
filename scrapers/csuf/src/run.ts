@@ -23,7 +23,7 @@ export interface TermSummary {
   termCode: string;
   sectionsParsed: number;
   sectionsBefore: number;
-  abortedByErrors: boolean;
+  pruned: boolean;
   abortedBySanityGate: boolean;
   persisted: PersistResult | null;
 }
@@ -43,7 +43,10 @@ export interface ScrapeSummary {
     rowIndex: number;
     error: string;
   }>;
+  coursesMissingUnits: string[];
 }
+
+const MAX_UNIT_ATTEMPTS = 2;
 
 function message(err: unknown): string {
   return err instanceof Error ? err.message : String(err);
@@ -59,6 +62,7 @@ export async function runFullScrape(deps: FullScrapeDeps): Promise<ScrapeSummary
     detailErrors: [],
     rowsSkipped: [],
     resultRowsSkipped: [],
+    coursesMissingUnits: [],
   };
 
   const terms = selectTerms(deps.catalog, deps.termCodes);
@@ -69,6 +73,7 @@ export async function runFullScrape(deps: FullScrapeDeps): Promise<ScrapeSummary
     // Units are a course attribute, so one detail fetch serves every section and
     // every career that offers the course.
     const unitsByCourse = new Map<string, string>();
+    const unitAttempts = new Map<string, number>();
     const rows: ResultRow[] = [];
 
     for (const subject of deps.catalog.subjects) {
@@ -101,19 +106,32 @@ export async function runFullScrape(deps: FullScrapeDeps): Promise<ScrapeSummary
 
         for (const result of found.rows) {
           const key = `${result.row.subject} ${result.row.catalog_nbr}`;
-          if (!unitsByCourse.has(key)) {
+          // Leave a failed course uncached so a later row retries it, but stop
+          // after MAX_UNIT_ATTEMPTS so one dead detail page cannot cost a
+          // request per section.
+          if (!unitsByCourse.has(key) && (unitAttempts.get(key) ?? 0) < MAX_UNIT_ATTEMPTS) {
+            unitAttempts.set(key, (unitAttempts.get(key) ?? 0) + 1);
             try {
               unitsByCourse.set(key, await deps.fetchUnits(result.rowIndex));
             } catch (err) {
               incomplete = true;
               summary.detailErrors.push({ course: key, error: message(err) });
-              unitsByCourse.set(key, '');
             }
           }
           rows.push(result);
         }
       }
     }
+
+    const missingUnits = [
+      ...new Set(
+        rows
+          .map((r) => `${r.row.subject} ${r.row.catalog_nbr}`)
+          .filter((key) => !unitsByCourse.has(key)),
+      ),
+    ];
+    summary.coursesMissingUnits.push(...missingUnits);
+    if (missingUnits.length > 0) incomplete = true;
 
     const withUnits = rows
       .map((r) => ({ ...r.row, units: unitsByCourse.get(`${r.row.subject} ${r.row.catalog_nbr}`) ?? '' }))
@@ -125,21 +143,9 @@ export async function runFullScrape(deps: FullScrapeDeps): Promise<ScrapeSummary
     const sectionsParsed = courses.reduce((n, c) => n + c.sections.length, 0);
     summary.sectionsParsed += sectionsParsed;
     const sectionsBefore = await deps.countExistingSections(term.code);
-
-    if (incomplete) {
-      summary.ok = false;
-      summary.terms.push({
-        termCode: term.code,
-        sectionsParsed,
-        sectionsBefore,
-        abortedByErrors: true,
-        abortedBySanityGate: false,
-        persisted: null,
-      });
-      continue;
-    }
-
-    const gatePassed = sectionsBefore === 0 || sectionsParsed / sectionsBefore >= deps.sanityMinRatio;
+    const gatePassed =
+      sectionsParsed > 0 &&
+      (sectionsBefore === 0 || sectionsParsed / sectionsBefore >= deps.sanityMinRatio);
 
     if (!gatePassed) {
       summary.ok = false;
@@ -147,24 +153,26 @@ export async function runFullScrape(deps: FullScrapeDeps): Promise<ScrapeSummary
         termCode: term.code,
         sectionsParsed,
         sectionsBefore,
-        abortedByErrors: false,
+        pruned: false,
         abortedBySanityGate: true,
         persisted: null,
       });
       continue;
     }
 
+    if (incomplete) summary.ok = false;
     const persisted = await deps.persist({
       termCode: term.code,
       termName: term.name,
       departmentNames,
       courses,
+      prune: !incomplete,
     });
     summary.terms.push({
       termCode: term.code,
       sectionsParsed,
       sectionsBefore,
-      abortedByErrors: false,
+      pruned: !incomplete,
       abortedBySanityGate: false,
       persisted,
     });

@@ -18,6 +18,7 @@ function selectBody(html: string, name: string): string {
   const open = html.indexOf(`<select name='${name}'`);
   if (open === -1) throw new Error(`dropdown ${name} not found on entry page`);
   const close = html.indexOf('</select>', open);
+  if (close === -1) throw new Error(`dropdown ${name} is unterminated on entry page`);
   return html.slice(open, close);
 }
 

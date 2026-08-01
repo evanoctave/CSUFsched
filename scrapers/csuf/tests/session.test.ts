@@ -146,6 +146,25 @@ describe('redirect handling', () => {
     expect(fetchFn.mock.calls[1][0]).toBe(expectedAbsolute);
   });
 
+  it('keeps the user-agent when a 302 downgrades a POST to a GET', async () => {
+    const redirectHeaders = new Headers();
+    redirectHeaders.set('location', DEFAULT_BASE_URL);
+
+    const fetchFn = vi.fn(async (_url: string, _init?: RequestInit) => {
+      const call = fetchFn.mock.calls.length;
+      if (call === 1) return res(entryHtml('SID=='));
+      if (call === 2) return new Response(null, { status: 302, headers: redirectHeaders });
+      return res('<PAGE id="blank"></PAGE>');
+    });
+
+    const session = await openSession({ baseUrl: DEFAULT_BASE_URL, fetchFn });
+    await session.post('DO_THING');
+
+    const hopInit = fetchFn.mock.calls[2][1] as RequestInit | undefined;
+    expect((hopInit?.headers as Record<string, string>)['user-agent']).toMatch(/Mozilla/);
+    expect(hopInit?.body).toBeUndefined();
+  });
+
   it('rejects when the redirect chain exceeds 10 hops', async () => {
     const redirectHeaders = new Headers();
     redirectHeaders.set('location', DEFAULT_BASE_URL);
