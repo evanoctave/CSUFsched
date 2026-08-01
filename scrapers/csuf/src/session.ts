@@ -19,9 +19,12 @@ export interface PeopleSoftSession {
 }
 
 export class SessionResetError extends Error {
-  constructor(public readonly action: string) {
+  readonly action: string;
+
+  constructor(action: string) {
     super(`session reset while performing action ${action}`);
     this.name = 'SessionResetError';
+    this.action = action;
   }
 }
 
