@@ -1,0 +1,97 @@
+name: csufsched
+
+x-db-url: &db-url
+  DATABASE_URL: postgres://csufsched:${POSTGRES_PASSWORD:-csufsched}@postgres:5432/csufsched
+
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: csufsched
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-csufsched}
+      POSTGRES_DB: csufsched
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - '${POSTGRES_PORT:-5432}:5432'
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U csufsched -d csufsched']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  migrate:
+    build:
+      context: .
+      target: migrate
+    environment: *db-url
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: 'no'
+
+  api:
+    build:
+      context: .
+      target: api
+    environment:
+      <<: *db-url
+      PORT: 3001
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:8080}
+    ports:
+      - '3001:3001'
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  web:
+    build:
+      context: .
+      target: web
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:3001}
+    ports:
+      - '8080:80'
+    depends_on:
+      - api
+
+  # One-shot jobs. `docker compose run --rm scrape-full` rather than `up`, since
+  # the full scrape takes ~1.5h and must not restart on its own.
+  scrape-full:
+    profiles: [scrape]
+    build:
+      context: .
+      target: scraper
+    environment: *db-url
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  scrape-status:
+    profiles: [scrape]
+    build:
+      context: .
+      target: scraper
+    environment:
+      <<: *db-url
+      TERM_CODE: ${TERM_CODE:-}
+    command: pnpm --filter @csufsched/scraper-csuf scrape:status
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  scrape-rmp:
+    profiles: [scrape]
+    build:
+      context: .
+      target: scraper
+    environment:
+      <<: *db-url
+      RMP_SCHOOL_ID: ${RMP_SCHOOL_ID:-}
+    command: pnpm --filter @csufsched/scraper-rmp scrape
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+volumes:
+  pgdata:

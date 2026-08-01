@@ -1,6 +1,22 @@
 # CSUFsched
 csuf schedule builder
 
+## Running it
+
+```sh
+docker compose up --build          # postgres + migrations + api on :3001 + web on :8080
+docker compose run --rm scrape-full   # ~1.5h, populates the catalog
+RMP_SCHOOL_ID=... docker compose run --rm scrape-rmp
+```
+
+The database starts empty and the migrations only create the schema, so the app has nothing
+to show until the full scrape finishes. Run `scrape-rmp` after it, not before — it reads the
+professor names the catalog scrape wrote.
+
+`VITE_API_URL` is inlined into the frontend bundle at image build time, so pointing the web
+container at a different backend means rebuilding it, not restarting it. It must agree with
+the API's `CORS_ORIGIN` or the browser drops every response.
+
 ## Tests
 
 ```sh
