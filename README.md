@@ -1,6 +1,19 @@
 # CSUFsched
 csuf schedule builder
 
+## Tests
+
+```sh
+pnpm -r typecheck
+TEST_DATABASE_URL=postgres://localhost/csufsched_test pnpm -r test
+pnpm --filter @csufsched/web test:e2e
+```
+
+Integration tests skip themselves when `TEST_DATABASE_URL` is unset, so a run without it
+passes while never exercising the pruning and deletion paths. Each of those files migrates
+into a scratch schema of its own, so they are safe to point at a scratch database and safe
+to run concurrently. CI always sets the variable.
+
 ## Scraper operations
 
 Environment: `DATABASE_URL` (required), `CSUF_BASE_URL` (defaults to the public Class Search
