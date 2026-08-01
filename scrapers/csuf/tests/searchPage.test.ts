@@ -98,7 +98,7 @@ describe('makeSearcher', () => {
     const post = vi.fn().mockResolvedValueOnce(noResults).mockResolvedValueOnce(results);
     const search = makeSearcher({ post } as never);
 
-    expect(await search(criteria)).toEqual({ rows: [], skipped: [] });
+    expect(await search(criteria)).toEqual({ rows: [], skipped: [], reported: 0 });
     await search({ ...criteria, subject: 'MATH' });
 
     expect(actions(post)).toEqual([SEARCH_ACTION, SEARCH_ACTION]);

@@ -27,8 +27,12 @@ function resultRow(rowIndex: number, overrides: Partial<RawClassRow> = {}): Resu
   return { rowIndex, row: row(overrides) };
 }
 
-function outcome(rows: ResultRow[], skipped: SearchOutcome['skipped'] = []): SearchOutcome {
-  return { rows, skipped };
+function outcome(
+  rows: ResultRow[],
+  skipped: SearchOutcome['skipped'] = [],
+  reported: number | null = rows.length + skipped.length,
+): SearchOutcome {
+  return { rows, skipped, reported };
 }
 
 interface TestDeps {
@@ -175,6 +179,36 @@ describe('runFullScrape', () => {
     expect(summary.rowsSkipped).toHaveLength(1);
     expect(d.persist.mock.calls[0][0].prune).toBe(false);
     expect(summary.terms[0].pruned).toBe(false);
+  });
+
+  it('refreshes without pruning when the page counted rows the parser never saw', async () => {
+    const d = deps({
+      search: vi.fn<(criteria: SearchCriteria) => Promise<SearchOutcome>>(
+        async () => outcome([resultRow(0)], [], 4),
+      ),
+    });
+
+    const summary = await runFullScrape(d);
+
+    expect(summary.searchesShort).toEqual([
+      { term: '2267', subject: 'CPSC', career: 'UGRD', reported: 4, read: 1 },
+    ]);
+    expect(summary.ok).toBe(false);
+    expect(d.persist.mock.calls[0][0].prune).toBe(false);
+    expect(summary.terms[0].pruned).toBe(false);
+  });
+
+  it('refreshes without pruning when the page carries no count to check against', async () => {
+    const d = deps({
+      search: vi.fn<(criteria: SearchCriteria) => Promise<SearchOutcome>>(
+        async () => outcome([resultRow(0)], [], null),
+      ),
+    });
+
+    const summary = await runFullScrape(d);
+
+    expect(summary.searchesShort[0].reported).toBeNull();
+    expect(d.persist.mock.calls[0][0].prune).toBe(false);
   });
 
   it('prunes only when the term was scraped cleanly', async () => {

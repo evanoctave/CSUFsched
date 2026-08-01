@@ -13,8 +13,12 @@ function resultRow(rowIndex: number, classNbr: string, status: string): ResultRo
   return { rowIndex, row };
 }
 
-function outcome(rows: ResultRow[], skipped: SearchOutcome['skipped'] = []): SearchOutcome {
-  return { rows, skipped };
+function outcome(
+  rows: ResultRow[],
+  skipped: SearchOutcome['skipped'] = [],
+  reported: number | null = rows.length + skipped.length,
+): SearchOutcome {
+  return { rows, skipped, reported };
 }
 
 interface TestDeps {
@@ -86,6 +90,24 @@ describe('refreshStatuses', () => {
     expect(summary.resultRowsSkipped).toEqual([
       { subject: 'CPSC', career: 'UGRD', rowIndex: 7, error: 'field MTG_ROOM$7 not found' },
     ]);
+  });
+
+  it('reports a search whose page counted rows the parser never saw', async () => {
+    const d = deps({
+      subjects: ['CPSC'],
+      search: vi.fn<(criteria: SearchCriteria) => Promise<SearchOutcome>>(
+        async () => outcome([resultRow(0, '12345', 'O')], [], 4),
+      ),
+      countExistingSections: vi.fn<() => Promise<number>>(async () => 1),
+    });
+    const summary = await refreshStatuses(d);
+
+    expect(summary.searchesShort).toEqual([
+      { subject: 'CPSC', career: 'UGRD', reported: 4, read: 1 },
+    ]);
+    expect(summary.ok).toBe(false);
+    // A status update deletes nothing, so the row it did read is still applied.
+    expect(d.applyUpdates).toHaveBeenCalledWith([{ classNbr: '12345', status: 'open' }]);
   });
 
   it('aborts without writing when it observes too few sections', async () => {

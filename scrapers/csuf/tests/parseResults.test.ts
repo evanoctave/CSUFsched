@@ -2,7 +2,14 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, it, expect } from 'vitest';
-import { parseResultRows, parseDayTime, parseRoom, parseMode, parseStatus } from '../src/parseResults';
+import {
+  parseResultRows,
+  hasUnaccountedRows,
+  parseDayTime,
+  parseRoom,
+  parseMode,
+  parseStatus,
+} from '../src/parseResults';
 
 const dir = path.join(path.dirname(fileURLToPath(import.meta.url)), 'fixtures');
 const cpsc = fs.readFileSync(path.join(dir, 'results-cpsc.html'), 'utf8');
@@ -102,7 +109,7 @@ describe('parseResultRows', () => {
   });
 
   it('returns nothing for a page with no result rows', () => {
-    expect(parseResultRows(noResults)).toEqual({ rows: [], skipped: [] });
+    expect(parseResultRows(noResults)).toEqual({ rows: [], skipped: [], reported: null });
   });
 
   it('records an unparseable row instead of throwing', () => {
@@ -119,6 +126,12 @@ describe('parseResultRows', () => {
     expect(rows).toHaveLength(0);
     expect(skipped).toHaveLength(1);
     expect(skipped[0].rowIndex).toBe(0);
+  });
+
+  it("reads every row the page's own count says are there", () => {
+    const parsed = parseResultRows(cpsc);
+    expect(parsed.reported).toBe(parsed.rows.length + parsed.skipped.length);
+    expect(hasUnaccountedRows(parsed)).toBe(false);
   });
 
   it('skips rows under an unreadable header instead of giving them to the course above', () => {
@@ -143,5 +156,41 @@ describe('parseResultRows', () => {
     expect(skipped).toEqual([
       { rowIndex: 1, error: 'unreadable course group header "GIBBERISH"' },
     ]);
+  });
+});
+
+describe('hasUnaccountedRows', () => {
+  it('reports a shortfall when the page counted rows the parser never saw', () => {
+    const html = `
+      <span>3 class section(s) found</span>
+      <a class='PSHYPERLINK' title='Collapse section CPSC 121 - OOP'>x</a>
+      <a name='MTG_CLASS_NBR$0' id='MTG_CLASS_NBR$0'>111</a>
+      <span id='MTG_CLASSNAME$0'>01-LEC<br />Regular</span>
+      <span id='MTG_DAYTIME$0'>MoWe 10:00AM - 10:50AM</span>
+      <span id='MTG_ROOM$0'>CS 101</span>
+      <span id='FUL_STU_SS_WRK_LONGVALUE$0'>In Person</span>
+      <span id='MTG_INSTR$0'>Staff</span>
+      <div id='win0divDERIVED_CLSRCH_SSR_STATUS_LONG$0'><img alt="Open"></div>`;
+
+    const parsed = parseResultRows(html);
+
+    expect(parsed.rows).toHaveLength(1);
+    expect(parsed.skipped).toHaveLength(0);
+    expect(parsed.reported).toBe(3);
+    expect(hasUnaccountedRows(parsed)).toBe(true);
+  });
+
+  it('counts a row the parser rejected as accounted for, since it was reported', () => {
+    expect(
+      hasUnaccountedRows({
+        rows: [],
+        skipped: [{ rowIndex: 0, error: 'unknown instruction mode "Teleportation"' }],
+        reported: 1,
+      }),
+    ).toBe(false);
+  });
+
+  it('treats a missing count as a shortfall, since the check can no longer be trusted', () => {
+    expect(hasUnaccountedRows({ rows: [], skipped: [], reported: null })).toBe(true);
   });
 });

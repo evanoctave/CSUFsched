@@ -1,4 +1,5 @@
 import { parseClassRows } from './parse.ts';
+import { hasUnaccountedRows } from './parseResults.ts';
 import type { SearchOutcome } from './searchPage.ts';
 import { selectTerms } from './validation.ts';
 import type {
@@ -44,6 +45,13 @@ export interface ScrapeSummary {
     error: string;
   }>;
   coursesMissingUnits: string[];
+  searchesShort: Array<{
+    term: string;
+    subject: string;
+    career: string;
+    reported: number | null;
+    read: number;
+  }>;
 }
 
 const MAX_UNIT_ATTEMPTS = 2;
@@ -63,6 +71,7 @@ export async function runFullScrape(deps: FullScrapeDeps): Promise<ScrapeSummary
     rowsSkipped: [],
     resultRowsSkipped: [],
     coursesMissingUnits: [],
+    searchesShort: [],
   };
 
   const terms = selectTerms(deps.catalog, deps.termCodes);
@@ -94,6 +103,16 @@ export async function runFullScrape(deps: FullScrapeDeps): Promise<ScrapeSummary
         }
         summary.searchesRun += 1;
         if (found.skipped.length > 0) incomplete = true;
+        if (hasUnaccountedRows(found)) {
+          incomplete = true;
+          summary.searchesShort.push({
+            term: term.code,
+            subject: subject.code,
+            career: career.code,
+            reported: found.reported,
+            read: found.rows.length + found.skipped.length,
+          });
+        }
         for (const s of found.skipped) {
           summary.resultRowsSkipped.push({
             term: term.code,

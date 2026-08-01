@@ -99,6 +99,24 @@ function headerFor(headers: CourseHeader[], offset: number): CourseGroup {
 export interface ResultParseResult {
   rows: ResultRow[];
   skipped: Array<{ rowIndex: number; error: string }>;
+  // PeopleSoft's own tally for this search. Every row it counts should become
+  // either a parsed row or a skipped one.
+  reported: number | null;
+}
+
+// A row matching none of the patterns above is invisible: neither parsed nor
+// reported as skipped, so nothing downstream knows it existed and pruning would
+// delete the section it belongs to. The site's own count is the only way to
+// notice. A missing count means the markup moved and the check can no longer be
+// trusted, which counts as a shortfall too.
+export function hasUnaccountedRows(result: ResultParseResult): boolean {
+  if (result.reported === null) return true;
+  return result.reported > result.rows.length + result.skipped.length;
+}
+
+function reportedCount(html: string): number | null {
+  const m = /(\d+)\s+class section\(s\) found/.exec(html);
+  return m === null ? null : Number(m[1]);
 }
 
 export function parseResultRows(html: string): ResultParseResult {
@@ -135,5 +153,5 @@ export function parseResultRows(html: string): ResultParseResult {
     }
   }
 
-  return { rows, skipped };
+  return { rows, skipped, reported: reportedCount(html) };
 }

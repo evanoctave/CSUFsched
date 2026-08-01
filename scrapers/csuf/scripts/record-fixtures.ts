@@ -19,7 +19,12 @@ function trimToGroups(html: string, groups: number): string {
     if (m === null) return html;
     cut = m.index;
   }
-  return `${html.slice(0, cut)}\n<!-- fixture truncated after ${groups} course groups -->\n`;
+  const kept = `${html.slice(0, cut)}\n<!-- fixture truncated after ${groups} course groups -->\n`;
+  // The page's own section count is cross-checked against the rows read from
+  // it, so a truncated fixture has to carry the count it was truncated to or
+  // it looks like a page that lost rows.
+  const rows = (kept.match(/id='MTG_CLASS_NBR\$\d+'[^>]*>\d+<\/a>/g) ?? []).length;
+  return kept.replace(/\d+ class section\(s\) found/, `${rows} class section(s) found`);
 }
 
 const limited = rateLimited(

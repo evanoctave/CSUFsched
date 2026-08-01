@@ -44,6 +44,7 @@ export async function resetSearch(session: PeopleSoftSession): Promise<void> {
 export interface SearchOutcome {
   rows: ResultRow[];
   skipped: Array<{ rowIndex: number; error: string }>;
+  reported: number | null;
 }
 
 // Detail fetches return to the results page themselves, so the only extra
@@ -63,7 +64,9 @@ export function makeSearcher(
     const html = await runSearch(session, criteria);
     needsReset = html !== null;
     resultsGeneration = session.generation;
-    return html === null ? { rows: [], skipped: [] } : parseResultRows(html);
+    // A search that matched nothing carries no tally, but zero is what it
+    // found, and saying so keeps it from reading as a lost-rows shortfall.
+    return html === null ? { rows: [], skipped: [], reported: 0 } : parseResultRows(html);
   };
 
   return async (criteria) => {

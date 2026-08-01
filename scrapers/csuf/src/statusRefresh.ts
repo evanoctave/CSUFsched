@@ -1,4 +1,5 @@
 import { STATUS_MAP } from './parse.ts';
+import { hasUnaccountedRows } from './parseResults.ts';
 import type { SearchOutcome } from './searchPage.ts';
 import type { SearchCriteria } from './types.ts';
 
@@ -20,6 +21,12 @@ export interface StatusRefreshSummary {
   searchErrors: Array<{ subject: string; career: string; error: string }>;
   rowsSkipped: Array<{ classNbr: string; error: string }>;
   resultRowsSkipped: Array<{ subject: string; career: string; rowIndex: number; error: string }>;
+  searchesShort: Array<{
+    subject: string;
+    career: string;
+    reported: number | null;
+    read: number;
+  }>;
 }
 
 export async function refreshStatuses(deps: StatusRefreshDeps): Promise<StatusRefreshSummary> {
@@ -31,6 +38,7 @@ export async function refreshStatuses(deps: StatusRefreshDeps): Promise<StatusRe
     searchErrors: [],
     rowsSkipped: [],
     resultRowsSkipped: [],
+    searchesShort: [],
   };
 
   const updates = new Map<string, string>();
@@ -52,6 +60,15 @@ export async function refreshStatuses(deps: StatusRefreshDeps): Promise<StatusRe
         continue;
       }
       if (found.skipped.length > 0) incomplete = true;
+      if (hasUnaccountedRows(found)) {
+        incomplete = true;
+        summary.searchesShort.push({
+          subject,
+          career,
+          reported: found.reported,
+          read: found.rows.length + found.skipped.length,
+        });
+      }
       for (const s of found.skipped) {
         summary.resultRowsSkipped.push({ subject, career, rowIndex: s.rowIndex, error: s.error });
       }
