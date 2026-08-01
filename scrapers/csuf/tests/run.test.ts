@@ -199,6 +199,18 @@ describe('runFullScrape', () => {
     expect(summary.detailErrors).toHaveLength(1);
     expect(summary.coursesMissingUnits).toEqual([]);
     expect(summary.terms[0].persisted?.sectionsUpserted).toBe(2);
+    // The retry landed, so nothing was lost and pruning is still safe.
+    expect(d.persist.mock.calls[0][0].prune).toBe(true);
+    expect(summary.ok).toBe(true);
+  });
+
+  it('drops rows whose units came back empty rather than persisting them', async () => {
+    const d = deps({ fetchUnits: vi.fn<(rowIndex: number) => Promise<string>>(async () => '') });
+    const summary = await runFullScrape(d);
+
+    expect(summary.coursesMissingUnits).toEqual(['CPSC 121']);
+    expect(d.persist).not.toHaveBeenCalled();
+    expect(summary.ok).toBe(false);
   });
 
   it('gives up on a course after two failed detail fetches and skips it', async () => {

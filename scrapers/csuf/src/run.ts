@@ -114,7 +114,9 @@ export async function runFullScrape(deps: FullScrapeDeps): Promise<ScrapeSummary
             try {
               unitsByCourse.set(key, await deps.fetchUnits(result.rowIndex));
             } catch (err) {
-              incomplete = true;
+              // Not incomplete yet: a retry on a later row may still land it.
+              // Only a course still missing units once every row is in has
+              // actually lost anything.
               summary.detailErrors.push({ course: key, error: message(err) });
             }
           }
@@ -123,20 +125,21 @@ export async function runFullScrape(deps: FullScrapeDeps): Promise<ScrapeSummary
       }
     }
 
+    // One predicate decides both which rows are dropped and which courses are
+    // reported missing, so the two can never disagree and drop a row silently.
+    const withUnits = rows.map((r) => ({
+      ...r.row,
+      units: unitsByCourse.get(`${r.row.subject} ${r.row.catalog_nbr}`) ?? '',
+    }));
     const missingUnits = [
       ...new Set(
-        rows
-          .map((r) => `${r.row.subject} ${r.row.catalog_nbr}`)
-          .filter((key) => !unitsByCourse.has(key)),
+        withUnits.filter((r) => r.units === '').map((r) => `${r.subject} ${r.catalog_nbr}`),
       ),
     ];
     summary.coursesMissingUnits.push(...missingUnits);
     if (missingUnits.length > 0) incomplete = true;
 
-    const withUnits = rows
-      .map((r) => ({ ...r.row, units: unitsByCourse.get(`${r.row.subject} ${r.row.catalog_nbr}`) ?? '' }))
-      .filter((r) => r.units !== '');
-    const { courses, skipped } = parseClassRows(withUnits);
+    const { courses, skipped } = parseClassRows(withUnits.filter((r) => r.units !== ''));
     summary.rowsSkipped.push(...skipped);
     if (skipped.length > 0) incomplete = true;
 

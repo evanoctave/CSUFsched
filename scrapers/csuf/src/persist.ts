@@ -66,11 +66,12 @@ export async function persistTerm(pool: Pool, input: PersistInput): Promise<Pers
       }
     }
 
+    const observedDeptIds = [...deptIds.values()];
     const sectionsDeleted = input.prune
-      ? await deleteSectionsNotIn(client, termId, keptSectionIds)
+      ? await deleteSectionsNotIn(client, termId, keptSectionIds, observedDeptIds)
       : 0;
     const coursesDeleted = input.prune
-      ? await deleteCoursesNotIn(client, termId, keptCourseIds)
+      ? await deleteCoursesNotIn(client, termId, keptCourseIds, observedDeptIds)
       : 0;
 
     await client.query('COMMIT');

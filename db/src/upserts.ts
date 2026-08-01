@@ -176,16 +176,22 @@ export async function countSectionsForTerm(db: Queryable, termId: number): Promi
   return (res.rows[0] as { n: number }).n;
 }
 
+// Both deletes are confined to the departments the caller actually saw rows
+// for. A subject that comes back empty — whether it really has no classes this
+// term or the site quietly served the wrong page — then keeps its existing rows
+// instead of losing every one of them.
 export async function deleteSectionsNotIn(
   db: Queryable,
   termId: number,
   keptSectionIds: number[],
+  deptIds: number[],
 ): Promise<number> {
   const res = await db.query(
     `DELETE FROM sections s
      USING courses c
-     WHERE c.id = s.course_id AND c.term_id = $1 AND NOT (s.id = ANY($2::int[]))`,
-    [termId, keptSectionIds],
+     WHERE c.id = s.course_id AND c.term_id = $1 AND c.dept_id = ANY($3::int[])
+       AND NOT (s.id = ANY($2::int[]))`,
+    [termId, keptSectionIds, deptIds],
   );
   return res.rowCount ?? 0;
 }
@@ -194,10 +200,12 @@ export async function deleteCoursesNotIn(
   db: Queryable,
   termId: number,
   keptCourseIds: number[],
+  deptIds: number[],
 ): Promise<number> {
   const res = await db.query(
-    `DELETE FROM courses WHERE term_id = $1 AND NOT (id = ANY($2::int[]))`,
-    [termId, keptCourseIds],
+    `DELETE FROM courses
+     WHERE term_id = $1 AND dept_id = ANY($3::int[]) AND NOT (id = ANY($2::int[]))`,
+    [termId, keptCourseIds, deptIds],
   );
   return res.rowCount ?? 0;
 }

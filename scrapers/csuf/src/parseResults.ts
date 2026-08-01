@@ -53,37 +53,47 @@ function statusAlt(html: string, index: number): string {
   return m[1];
 }
 
-interface CourseHeader {
-  offset: number;
+interface CourseGroup {
   subject: string;
   catalogNbr: string;
   title: string;
 }
 
+interface CourseHeader {
+  offset: number;
+  label: string;
+  course: CourseGroup | null;
+}
+
+// An unreadable header is kept rather than dropped. Dropping it would silently
+// hand its rows to the course above, attaching real sections to the wrong
+// course; keeping it lets those rows fail and be reported instead.
 function courseHeaders(html: string): CourseHeader[] {
   const headers: CourseHeader[] = [];
   for (const m of html.matchAll(/title='Collapse section ([^']*)'/g)) {
     const label = decodeEntities(m[1]).trim();
     const parsed = /^(\S+)\s+(\S+)\s+-\s+([\s\S]+)$/.exec(label);
-    if (parsed === null) continue;
     headers.push({
       offset: m.index ?? 0,
-      subject: parsed[1],
-      catalogNbr: parsed[2],
-      title: parsed[3].trim(),
+      label,
+      course:
+        parsed === null
+          ? null
+          : { subject: parsed[1], catalogNbr: parsed[2], title: parsed[3].trim() },
     });
   }
   return headers;
 }
 
-function headerFor(headers: CourseHeader[], offset: number): CourseHeader {
+function headerFor(headers: CourseHeader[], offset: number): CourseGroup {
   let found: CourseHeader | undefined;
   for (const h of headers) {
     if (h.offset > offset) break;
     found = h;
   }
   if (found === undefined) throw new Error('row has no preceding course group header');
-  return found;
+  if (found.course === null) throw new Error(`unreadable course group header "${found.label}"`);
+  return found.course;
 }
 
 export interface ResultParseResult {

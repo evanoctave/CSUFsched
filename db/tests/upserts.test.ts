@@ -156,7 +156,7 @@ describe.skipIf(!TEST_URL)('transactional swap', () => {
       });
       expect(sameId).toBe(keptId);
 
-      const deleted = await deleteSectionsNotIn(pool, termId, [keptId]);
+      const deleted = await deleteSectionsNotIn(pool, termId, [keptId], [deptId]);
       expect(deleted).toBe(1);
       const rows = await pool.query('SELECT id FROM sections WHERE id = $1', [goneId]);
       expect(rows.rowCount).toBe(0);
@@ -171,7 +171,7 @@ describe.skipIf(!TEST_URL)('transactional swap', () => {
       const status = await pool.query('SELECT enrollment_status FROM sections WHERE id = $1', [keptId]);
       expect(status.rows[0].enrollment_status).toBe('waitlist');
 
-      const coursesDeleted = await deleteCoursesNotIn(pool, termId, []);
+      const coursesDeleted = await deleteCoursesNotIn(pool, termId, [], [deptId]);
       expect(coursesDeleted).toBe(1);
     } finally {
       await pool.query('DELETE FROM terms WHERE code = $1', ['2299']);

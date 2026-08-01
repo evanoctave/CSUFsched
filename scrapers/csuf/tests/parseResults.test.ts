@@ -120,4 +120,28 @@ describe('parseResultRows', () => {
     expect(skipped).toHaveLength(1);
     expect(skipped[0].rowIndex).toBe(0);
   });
+
+  it('skips rows under an unreadable header instead of giving them to the course above', () => {
+    const row = (i: number, classNbr: string) => `
+      <a name='MTG_CLASS_NBR$${i}' id='MTG_CLASS_NBR$${i}'>${classNbr}</a>
+      <span id='MTG_CLASSNAME$${i}'>01-LEC<br />Regular</span>
+      <span id='MTG_DAYTIME$${i}'>MoWe 10:00AM - 10:50AM</span>
+      <span id='MTG_ROOM$${i}'>CS 101</span>
+      <span id='FUL_STU_SS_WRK_LONGVALUE$${i}'>In Person</span>
+      <span id='MTG_INSTR$${i}'>Staff</span>
+      <div id='win0divDERIVED_CLSRCH_SSR_STATUS_LONG$${i}'><img alt="Open"></div>`;
+
+    const html = `
+      <a class='PSHYPERLINK' title='Collapse section CPSC 121 - OOP'>x</a>
+      ${row(0, '111')}
+      <a class='PSHYPERLINK' title='Collapse section GIBBERISH'>x</a>
+      ${row(1, '222')}`;
+
+    const { rows, skipped } = parseResultRows(html);
+
+    expect(rows.map((r) => r.row.class_nbr)).toEqual(['111']);
+    expect(skipped).toEqual([
+      { rowIndex: 1, error: 'unreadable course group header "GIBBERISH"' },
+    ]);
+  });
 });

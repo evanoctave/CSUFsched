@@ -128,6 +128,56 @@ describe.skipIf(!TEST_URL)('persistTerm (integration)', () => {
     }
   });
 
+  it('leaves a department it saw no rows for alone even when pruning', async () => {
+    const pool = createPool(scopedUrl(TEST_URL!, SCHEMA));
+    const names = new Map([
+      ['ZTST', 'Test Dept'],
+      ['ZOTH', 'Other Dept'],
+    ]);
+    try {
+      await persistTerm(pool, {
+        termCode: '2296',
+        termName: 'Two Dept Term',
+        departmentNames: names,
+        courses: [course(), course({ deptCode: 'ZOTH', sections: [
+          {
+            classNbr: '90002',
+            sectionCode: '01',
+            instructorName: null,
+            mode: 'in-person',
+            enrollmentStatus: 'open',
+            meetings: [],
+          },
+        ] })],
+        prune: true,
+      });
+
+      // A subject whose search came back empty contributes no rows at all.
+      const second = await persistTerm(pool, {
+        termCode: '2296',
+        termName: 'Two Dept Term',
+        departmentNames: names,
+        courses: [course()],
+        prune: true,
+      });
+
+      expect(second.coursesDeleted).toBe(0);
+      const survived = await pool.query(
+        `SELECT count(*)::int AS n FROM courses c
+         JOIN departments d ON d.id = c.dept_id
+         JOIN terms t ON t.id = c.term_id
+         WHERE t.code = '2296' AND d.code = 'ZOTH'`,
+      );
+      expect(survived.rows[0].n).toBe(1);
+    } finally {
+      await pool.query(`DELETE FROM courses WHERE term_id IN (SELECT id FROM terms WHERE code = '2296')`);
+      await pool.query(`DELETE FROM terms WHERE code = '2296'`);
+      await pool.query(`DELETE FROM departments WHERE code IN ('ZTST', 'ZOTH')`);
+      await pool.query(`DELETE FROM professors WHERE full_name = 'Ada Lovelace'`);
+      await pool.end();
+    }
+  });
+
   it('refreshes without deleting anything when prune is off', async () => {
     const pool = createPool(scopedUrl(TEST_URL!, SCHEMA));
     try {
