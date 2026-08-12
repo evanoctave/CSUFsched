@@ -80,6 +80,28 @@ describe.skipIf(!TEST_URL)('replaceGeCourseAreas (integration)', () => {
     ]);
   });
 
+  it('persists official GE areas 6 and Z', async () => {
+    await replaceGeCourseAreas(pool, {
+      catalogYear: '2026-2027',
+      sourceUrl,
+      sourcePublishedAt,
+      rows: [
+        { area: '6', subject: 'HIST', catalogNbr: '110A' },
+        { area: 'Z', subject: 'KNES', catalogNbr: '100' },
+      ],
+    });
+
+    const rows = await pool.query(
+      `SELECT area, subject, catalog_nbr FROM ge_course_areas
+       WHERE catalog_year = $1 ORDER BY area, subject, catalog_nbr`,
+      ['2026-2027'],
+    );
+    expect(rows.rows).toEqual([
+      { area: '6', subject: 'HIST', catalog_nbr: '110A' },
+      { area: 'Z', subject: 'KNES', catalog_nbr: '100' },
+    ]);
+  });
+
   it('removes rows absent from a later complete snapshot', async () => {
     await replaceGeCourseAreas(pool, {
       catalogYear: '2027-2028',

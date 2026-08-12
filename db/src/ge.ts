@@ -2,6 +2,7 @@ import type pg from 'pg';
 
 const OFFICIAL_GE_SOURCE_URL =
   'https://www.fullerton.edu/general-education/student-info/approved-courses.html';
+const CANONICAL_GE_AREAS = new Set(['1A', '1B', '1C', '2A', '3', '4', '5A', '5B', '6', 'Z']);
 
 export interface GeCourseAreaInput {
   area: string;
@@ -30,7 +31,7 @@ function isValidGeCourseArea(row: unknown): row is GeCourseAreaInput {
   return typeof area === 'string'
     && typeof subject === 'string'
     && typeof catalogNbr === 'string'
-    && /^[1-5][A-Z]?$/.test(area)
+    && CANONICAL_GE_AREAS.has(area)
     && /^[A-Z]{2,8}$/.test(subject)
     && /^\d{1,4}[A-Z]{0,2}$/.test(catalogNbr);
 }
