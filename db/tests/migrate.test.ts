@@ -60,18 +60,18 @@ describe.skipIf(!TEST_URL)('runMigrations (integration)', () => {
       const tables = await pool.query(
         `SELECT table_name FROM information_schema.tables WHERE table_schema = '${SCHEMA}'`,
       );
-      const names = tables.rows.map((r) => r.table_name);
-      for (const t of [
-        'terms',
-        'departments',
+      const names = tables.rows.map((r) => r.table_name).sort();
+      expect(names).toEqual([
         'courses',
-        'sections',
+        'departments',
+        'ge_course_areas',
         'meetings',
-        'professors',
         'prof_tags',
-      ]) {
-        expect(names).toContain(t);
-      }
+        'professors',
+        'schema_migrations',
+        'sections',
+        'terms',
+      ]);
     } finally {
       await pool.end();
       await resetSchema(SCHEMA, false);

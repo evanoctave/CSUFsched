@@ -40,6 +40,16 @@ export interface CourseWithSections extends Course {
   sections: Section[];
 }
 
+export interface GeSourceMeta {
+  sourceUrl: string;
+  sourcePublishedAt: string;
+}
+
+export interface RoadmapCoursesResponse {
+  courses: CourseWithSections[];
+  geSource: GeSourceMeta | null;
+}
+
 export interface TimeBlock {
   day: Day;
   startMin: number;
