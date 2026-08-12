@@ -138,4 +138,69 @@ describe.skipIf(!TEST_URL)('replaceGeCourseAreas (integration)', () => {
     );
     expect(rows.rows).toEqual([{ area: '1A', subject: 'ENGL', catalog_nbr: '101' }]);
   });
+
+  it.each([
+    ['an invalid catalog year', { catalogYear: '2026' }],
+    ['an unofficial source URL', { sourceUrl: 'https://example.com/ge.html' }],
+    ['an invalid source publication date', { sourcePublishedAt: new Date('invalid') }],
+    ['an invalid GE area', { rows: [{ area: 'all', subject: 'ENGL', catalogNbr: '101' }] }],
+    ['a non-string GE area', { rows: [{ area: 3 as unknown as string, subject: 'ART', catalogNbr: '101' }] }],
+    ['an invalid subject', { rows: [{ area: '1A', subject: 'English', catalogNbr: '101' }] }],
+    ['an invalid catalog number', { rows: [{ area: '1A', subject: 'ENGL', catalogNbr: '101!' }] }],
+  ])('rejects %s without deleting a verified snapshot', async (_label, invalid) => {
+    const catalogYear = '2030-2031';
+    await replaceGeCourseAreas(pool, {
+      catalogYear,
+      sourceUrl,
+      sourcePublishedAt,
+      rows: [{ area: '1A', subject: 'ENGL', catalogNbr: '101' }],
+    });
+
+    await expect(replaceGeCourseAreas(pool, {
+      catalogYear,
+      sourceUrl,
+      sourcePublishedAt,
+      rows: [{ area: '3', subject: 'ART', catalogNbr: '101' }],
+      ...invalid,
+    })).rejects.toThrow('Invalid GE snapshot');
+
+    const rows = await pool.query(
+      'SELECT area, subject, catalog_nbr FROM ge_course_areas WHERE catalog_year = $1',
+      [catalogYear],
+    );
+    expect(rows.rows).toEqual([{ area: '1A', subject: 'ENGL', catalog_nbr: '101' }]);
+  });
+
+  it('serializes complete snapshots for the same catalog year', async () => {
+    const catalogYear = '2031-2032';
+    const lockHolder = await pool.connect();
+    try {
+      await lockHolder.query('BEGIN');
+      await lockHolder.query('SELECT pg_advisory_xact_lock(hashtext($1))', [catalogYear]);
+
+      let settled = false;
+      const replacement = replaceGeCourseAreas(pool, {
+        catalogYear,
+        sourceUrl,
+        sourcePublishedAt,
+        rows: [{ area: '3', subject: 'ART', catalogNbr: '101' }],
+      });
+      void replacement.then(() => { settled = true; });
+
+      await new Promise((resolve) => setTimeout(resolve, 30));
+      expect(settled).toBe(false);
+
+      await lockHolder.query('COMMIT');
+      await replacement;
+    } finally {
+      await lockHolder.query('ROLLBACK').catch(() => {});
+      lockHolder.release();
+    }
+
+    const rows = await pool.query(
+      'SELECT area, subject, catalog_nbr FROM ge_course_areas WHERE catalog_year = $1',
+      [catalogYear],
+    );
+    expect(rows.rows).toEqual([{ area: '3', subject: 'ART', catalog_nbr: '101' }]);
+  });
 });
