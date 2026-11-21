@@ -1,1 +1,101 @@
 @import "tailwindcss";
+
+@theme {
+  --font-sans: "Onest", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Bricolage Grotesque", "Onest", ui-sans-serif, system-ui, sans-serif;
+
+  /* CSUF navy and orange, on a cool paper */
+  --color-ink: #00244e;
+  --color-titan: #ff7900;
+  --color-paper: #f1f4f8;
+  --color-line: #d8dfe9;
+  --color-muted: #536175;
+
+  --animate-pop: pop 0.24s cubic-bezier(0.2, 0.9, 0.3, 1.25);
+  --animate-reveal: reveal 0.2s ease-out;
+
+  @keyframes pop {
+    from {
+      opacity: 0;
+      transform: scale(0.94);
+    }
+  }
+  @keyframes reveal {
+    from {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+  }
+}
+
+@layer base {
+  * {
+    border-color: var(--color-line);
+  }
+  body {
+    background: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-titan);
+    outline-offset: 2px;
+  }
+  button:not(:disabled),
+  select {
+    cursor: pointer;
+  }
+  input[type="range"] {
+    accent-color: var(--color-ink);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer components {
+  .field {
+    width: 100%;
+    border: 1px solid var(--color-line);
+    border-radius: 0.5rem;
+    background-color: #fff;
+    padding: 0.45rem 0.65rem;
+    font-size: 0.875rem;
+    color: var(--color-ink);
+    transition:
+      border-color 0.15s,
+      box-shadow 0.15s;
+  }
+  .field:hover {
+    border-color: #a9b5c6;
+  }
+  .field:focus {
+    outline: none;
+    border-color: var(--color-ink);
+    box-shadow: 0 0 0 3px rgb(0 36 78 / 0.12);
+  }
+  select.field {
+    appearance: none;
+    padding-right: 1.9rem;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23536175' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m4 6 4 4 4-4'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.55rem center;
+    background-size: 1rem;
+  }
+
+  /* Busy time reads as "blocked out", not as a class */
+  .busy-hatch {
+    background-color: rgb(83 97 117 / 0.14);
+    background-image: repeating-linear-gradient(
+      -45deg,
+      transparent 0 6px,
+      rgb(83 97 117 / 0.22) 6px 7px
+    );
+  }
+}

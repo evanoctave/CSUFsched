@@ -38,21 +38,25 @@ export function ShareBar() {
   };
 
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex items-center gap-2">
       <a
         data-testid="share-link"
         href={url}
         onClick={copy}
-        className="text-sm text-blue-600 underline"
+        className="rounded-lg bg-ink px-3 py-1.5 text-sm font-medium text-white transition hover:bg-ink/85 active:scale-[0.97]"
       >
         Copy share link
       </a>
-      {copied && <span className="text-sm text-green-600">Copied!</span>}
+      {copied && (
+        <span role="status" className="animate-pop text-sm font-medium text-emerald-700">
+          Copied!
+        </span>
+      )}
       <button
         type="button"
         onClick={exportIcs}
         disabled={placedSectionIds.length === 0}
-        className="rounded border px-2 py-1 text-sm disabled:opacity-50"
+        className="rounded-lg border bg-white px-3 py-1.5 text-sm font-medium transition hover:border-ink/40 active:scale-[0.97] disabled:opacity-45 disabled:active:scale-100"
       >
         Export .ics
       </button>

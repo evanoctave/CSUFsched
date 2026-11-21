@@ -11,6 +11,7 @@ import {
   minToLabel,
 } from '../lib/time.ts';
 import { placedSections, useScheduleStore } from '../store.ts';
+import { courseColor } from '../lib/colors.ts';
 
 export interface GhostInfo {
   section: Section;
@@ -75,14 +76,24 @@ export function CalendarGrid({ ghost }: { ghost: GhostInfo | null }) {
     paint !== null ? dragToBusyBlock(paint.day, paint.y0, paint.y1) : null;
 
   return (
-    <div ref={setNodeRef} className="flex select-none" data-testid="calendar">
+    <div
+      ref={setNodeRef}
+      className="relative flex min-w-[640px] select-none rounded-xl border bg-white shadow-sm shadow-ink/5"
+      data-testid="calendar"
+    >
+      {placed.length === 0 && busyBlocks.length === 0 && ghost === null && paint === null && (
+        <p className="pointer-events-none absolute inset-x-0 top-40 z-10 mx-auto w-fit max-w-xs rounded-full bg-paper px-4 py-2 text-center text-xs text-muted">
+          Drag a section here to place it, or drag on a day to block out busy time.
+        </p>
+      )}
       {/* hour gutter */}
-      <div className="w-16 shrink-0 pt-6">
+      <div className="w-16 shrink-0">
+        <div className="sticky top-0 z-20 h-10 rounded-tl-xl border-b bg-white" />
         <div className="relative" style={{ height: `${GRID_HEIGHT}px` }}>
           {HOURS.map((h) => (
             <div
               key={h}
-              className="absolute right-1 -translate-y-1/2 text-xs text-gray-500"
+              className="absolute right-2 pt-1 text-[11px] text-muted"
               style={{ top: `${h - GRID_START_MIN}px` }}
             >
               {minToLabel(h)}
@@ -91,13 +102,17 @@ export function CalendarGrid({ ghost }: { ghost: GhostInfo | null }) {
         </div>
       </div>
       {/* day columns */}
-      {DAY_ORDER.map((day) => (
+      {DAY_ORDER.map((day, dayIdx) => (
         <div key={day} className="min-w-0 flex-1 border-l">
-          <div className="h-6 text-center text-xs font-medium text-gray-600">
+          <div
+            className={`sticky top-0 z-20 grid h-10 place-items-center border-b bg-white font-display text-sm font-semibold ${
+              dayIdx === DAY_ORDER.length - 1 ? 'rounded-tr-xl' : ''
+            }`}
+          >
             {DAY_LABELS[day]}
           </div>
           <div
-            className="relative bg-white"
+            className="relative cursor-crosshair"
             style={{ height: `${GRID_HEIGHT}px` }}
             data-testid={`col-${day}`}
             onPointerDown={(e) => onPointerDown(day, e)}
@@ -107,7 +122,7 @@ export function CalendarGrid({ ghost }: { ghost: GhostInfo | null }) {
             {HOURS.map((h) => (
               <div
                 key={h}
-                className="pointer-events-none absolute inset-x-0 border-t border-gray-100"
+                className="pointer-events-none absolute inset-x-0 border-t border-line/60"
                 style={{ top: `${h - GRID_START_MIN}px` }}
               />
             ))}
@@ -118,7 +133,7 @@ export function CalendarGrid({ ghost }: { ghost: GhostInfo | null }) {
                   type="button"
                   aria-label={`Busy ${fmtRange(b.startMin, b.endMin)} — click to remove`}
                   onClick={() => removeBusyBlock(i)}
-                  className="absolute inset-x-0.5 rounded bg-gray-400/70 text-[10px] text-white"
+                  className="busy-hatch absolute inset-x-1 animate-pop rounded-md text-[11px] font-medium text-muted transition hover:brightness-95"
                   style={blockStyle(b.startMin, b.endMin)}
                 >
                   Busy
@@ -131,15 +146,15 @@ export function CalendarGrid({ ghost }: { ghost: GhostInfo | null }) {
                 .map((m, i) => (
                   <div
                     key={`sec-${section.id}-${i}`}
-                    className="absolute inset-x-0.5 overflow-hidden rounded bg-blue-500 p-0.5 text-[10px] leading-tight text-white"
+                    className={`absolute inset-x-1 animate-pop cursor-default overflow-hidden rounded-md border-l-[3px] px-1.5 py-1 text-[11px] leading-tight shadow-sm shadow-ink/10 ${courseColor(course.id).block}`}
                     style={blockStyle(m.startMin, m.endMin)}
                   >
-                    <span className="font-semibold">{`${course.deptCode} ${course.catalogNbr}`}</span>
-                    <span className="block">{fmtRange(m.startMin, m.endMin)}</span>
+                    <span className="font-display font-semibold">{`${course.deptCode} ${course.catalogNbr}`}</span>
+                    <span className="block opacity-75">{fmtRange(m.startMin, m.endMin)}</span>
                     <button
                       type="button"
                       aria-label={`Remove ${course.deptCode} ${course.catalogNbr}`}
-                      className="absolute right-0.5 top-0.5"
+                      className="absolute right-0.5 top-0.5 grid size-4 place-items-center rounded text-sm leading-none opacity-50 transition hover:bg-black/10 hover:opacity-100 focus-visible:opacity-100"
                       onClick={() => removeSection(section.id)}
                     >
                       ×
@@ -154,17 +169,17 @@ export function CalendarGrid({ ghost }: { ghost: GhostInfo | null }) {
                   <div
                     key={`ghost-${i}`}
                     data-testid="ghost-block"
-                    className={`pointer-events-none absolute inset-x-0.5 rounded border-2 border-dashed ${
+                    className={`pointer-events-none absolute inset-x-1 rounded-md border-2 border-dashed transition-colors ${
                       ghost.conflict
-                        ? 'border-red-500 bg-red-300/50'
-                        : 'border-green-500 bg-green-300/50'
+                        ? 'border-red-500 bg-red-200/60'
+                        : 'border-emerald-500 bg-emerald-200/60'
                     }`}
                     style={blockStyle(m.startMin, m.endMin)}
                   />
                 ))}
             {paintPreview !== null && paintPreview.day === day && (
               <div
-                className="pointer-events-none absolute inset-x-0.5 rounded bg-gray-300/60"
+                className="busy-hatch pointer-events-none absolute inset-x-1 rounded-md"
                 style={blockStyle(paintPreview.startMin, paintPreview.endMin)}
               />
             )}

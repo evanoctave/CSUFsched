@@ -31,6 +31,20 @@ describe('parseDayTime', () => {
     }
   });
 
+  it('collapses the same pattern printed twice in one cell', () => {
+    expect(parseDayTime('Sa 9:00AM - 11:45AM\n\rSa 9:00AM - 11:45AM')).toEqual({
+      days: 'Sa',
+      start: '9:00AM',
+      end: '11:45AM',
+    });
+  });
+
+  it('rejects two genuinely different patterns in one cell', () => {
+    expect(() => parseDayTime('MoWe 8:30AM - 9:20AM\nTuTh 10:00AM - 10:50AM')).toThrow(
+      /multiple day\/times/i,
+    );
+  });
+
   it('throws on an unrecognised shape', () => {
     expect(() => parseDayTime('MoWe 8:30AM')).toThrow(/day\/time/i);
   });

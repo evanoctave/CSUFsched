@@ -48,15 +48,16 @@ export function CourseSearch() {
             c.title.toLowerCase().includes(needle),
         );
 
-  if (termId === null) return <p className="p-2 text-sm text-gray-500">Pick a term to start.</p>;
+  if (termId === null) return <p className="p-5 text-sm text-muted">Pick a term to start.</p>;
 
   return (
-    <div className="space-y-2 p-2">
-      <label className="block text-xs font-medium text-gray-600">
+    <div className="space-y-3 p-5">
+      <h2 className="font-display text-base font-semibold tracking-tight">Find courses</h2>
+      <label className="block text-xs font-medium text-muted">
         Department
         <select
           aria-label="Department"
-          className="mt-1 w-full rounded border p-1 text-sm"
+          className="field mt-1"
           value={dept}
           onChange={(e) => setDept(e.target.value)}
         >
@@ -67,40 +68,48 @@ export function CourseSearch() {
         </select>
       </label>
       <input
-        className="w-full rounded border p-1 text-sm"
+        type="search"
+        aria-label="Search courses"
+        className="field"
         placeholder="Search courses"
         value={q}
         onChange={(e) => setQ(e.target.value)}
       />
-      {loadError && <p className="text-xs text-red-600">Couldn't load catalog data.</p>}
+      {loadError && <p className="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-800">Couldn't load catalog data.</p>}
       {dept !== '' && filtered.length === 0 && !loadError && (
-        <p className="text-xs text-gray-500">No courses match.</p>
+        <p className="text-xs text-muted">No courses match.</p>
       )}
-      <ul className="space-y-1">
+      <ul className="space-y-2">
         {filtered.map((course) => (
-          <li key={course.id} className="rounded border bg-white">
-            <div className="flex items-center justify-between p-2">
+          <li
+            key={course.id}
+            className={`rounded-xl border transition-colors ${
+              expanded === course.id ? 'border-ink/30 bg-paper/60' : 'bg-white hover:border-ink/30'
+            }`}
+          >
+            <div className="flex items-center justify-between gap-2 p-3">
               <button
                 type="button"
-                className="text-left text-sm"
+                className="min-w-0 flex-1 text-left text-sm"
+                aria-expanded={expanded === course.id}
                 onClick={() => setExpanded(expanded === course.id ? null : course.id)}
               >
-                <span className="font-semibold">{`${course.deptCode} ${course.catalogNbr}`}</span>
-                <span className="block text-xs text-gray-600">{course.title}</span>
-                <span className="text-xs text-gray-400">{`${course.units} units`}</span>
+                <span className="font-display font-semibold">{`${course.deptCode} ${course.catalogNbr}`}</span>
+                <span className="block truncate text-xs text-muted">{course.title}</span>
+                <span className="text-xs text-muted/70">{`${course.units} units`}</span>
               </button>
               <button
                 type="button"
-                className="rounded bg-blue-50 px-2 py-1 text-xs text-blue-700"
+                className="shrink-0 rounded-full border border-ink/15 px-2.5 py-1 text-xs font-medium transition hover:border-ink hover:bg-ink hover:text-white active:scale-95"
                 onClick={() => addWantedCourse(course)}
               >
                 + Solver
               </button>
             </div>
             {expanded === course.id && (
-              <div className="space-y-1 border-t p-2">
+              <div className="animate-reveal space-y-1.5 border-t p-2">
                 {course.sections.length === 0 && (
-                  <p className="text-xs text-gray-500">No sections listed.</p>
+                  <p className="p-1 text-xs text-muted">No sections listed.</p>
                 )}
                 {course.sections.map((section) => (
                   <SectionCard key={section.id} course={course} section={section} />

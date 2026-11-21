@@ -8,5 +8,8 @@
   },
   "devDependencies": {
     "typescript": "^5.5.0"
+  },
+  "dependencies": {
+    "freebuff": "^0.2.36"
   }
 }

@@ -116,10 +116,10 @@ export default function App() {
     new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
   if (terms === null) {
-    return <p className="p-8 text-gray-500">Loading…</p>;
+    return <p className="grid min-h-dvh animate-pulse place-items-center text-sm text-muted">Loading…</p>;
   }
   if (terms.length === 0 && !apiStale) {
-    return <p className="p-8 text-gray-500">No term data yet</p>;
+    return <p className="grid min-h-dvh place-items-center text-sm text-muted">No term data yet</p>;
   }
 
   return (
@@ -133,18 +133,31 @@ export default function App() {
         setGhost(null);
       }}
     >
-      <div className="flex min-h-screen flex-col">
+      <div className="flex min-h-dvh flex-col lg:h-dvh">
         {apiStale && (
-          <div className="bg-amber-100 px-4 py-2 text-sm text-amber-900">
+          <div className="animate-reveal border-b border-amber-200 bg-amber-50 px-5 py-2 text-sm text-amber-900">
             API unreachable — showing cached catalog.
           </div>
         )}
         {shareError && (
-          <div className="bg-red-100 px-4 py-2 text-sm text-red-900">{shareError}</div>
+          <div className="animate-reveal border-b border-red-200 bg-red-50 px-5 py-2 text-sm text-red-900">{shareError}</div>
         )}
-        <header className="flex items-center justify-between border-b px-4 py-3">
-          <h1 className="text-lg font-semibold">CSUF Schedule Builder</h1>
-          <div className="flex items-center gap-4">
+        <header className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 border-b bg-white px-5 py-3">
+          <div className="flex items-center gap-2.5">
+            <span
+              aria-hidden="true"
+              className="grid size-7 grid-cols-2 gap-0.5 rounded-md bg-ink p-1.5"
+            >
+              <span className="rounded-[2px] bg-titan" />
+              <span className="rounded-[2px] bg-white/30" />
+              <span className="rounded-[2px] bg-white/30" />
+              <span className="rounded-[2px] bg-white" />
+            </span>
+            <h1 className="font-display text-lg font-semibold tracking-tight">
+              CSUF Schedule Builder
+            </h1>
+          </div>
+          <div className="flex flex-wrap items-center gap-3">
             <select
               aria-label="Term"
               value={termId ?? ''}
@@ -152,7 +165,7 @@ export default function App() {
                 const t = terms.find((x) => x.id === Number(e.target.value));
                 if (t) setTerm(t.id, t.name);
               }}
-              className="rounded border px-2 py-1 text-sm"
+              className="field !w-auto font-medium"
             >
               {terms.map((t) => (
                 <option key={t.id} value={t.id}>
@@ -163,22 +176,22 @@ export default function App() {
             <ShareBar />
           </div>
         </header>
-        <div className="flex flex-1">
-          <aside className="w-80 space-y-6 overflow-y-auto border-r p-4">
+        <div className="flex flex-1 flex-col lg:min-h-0 lg:flex-row">
+          <aside className="border-b bg-white lg:w-96 lg:shrink-0 lg:overflow-y-auto lg:border-b-0 lg:border-r">
             <CourseSearch />
             <SolverPanel />
           </aside>
-          <main className="flex-1 overflow-x-auto p-4">
+          <main className="min-w-0 flex-1 overflow-auto p-3 lg:p-5">
             <CalendarGrid ghost={ghost} />
           </main>
         </div>
-        <footer className="border-t px-4 py-2 text-xs text-gray-500">
+        <footer className="border-t bg-white px-5 py-1.5 text-xs text-muted">
           {dataFrom ? `Data from ${fmtDataFrom(dataFrom)}` : 'Data freshness unknown'}
         </footer>
       </div>
       <DragOverlay>
         {drag && (
-          <div className="rounded border bg-white p-2 text-sm shadow">
+          <div className="w-max rotate-2 cursor-grabbing rounded-lg border border-ink/20 bg-white px-3 py-2 font-display text-sm font-semibold shadow-xl shadow-ink/20">
             {drag.course.deptCode} {drag.course.catalogNbr} · Sec {drag.section.sectionCode}
           </div>
         )}

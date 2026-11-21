@@ -3,6 +3,7 @@ import { solve } from '@csufsched/solver';
 import type { CourseWithSections, Day, SolverResult } from '@csufsched/types';
 import { DAY_LABELS, DAY_ORDER, GRID_START_MIN, minToLabel } from '../lib/time.ts';
 import { findSection, useScheduleStore } from '../store.ts';
+import { courseColor } from '../lib/colors.ts';
 
 const START_OPTIONS = [420, 480, 540, 600, 660]; // 7am–11am
 const END_OPTIONS = [720, 840, 960, 1080, 1200, 1320]; // 12pm–10pm
@@ -18,16 +19,16 @@ function MiniCal({
     .map((id) => findSection(catalog, id))
     .filter((x): x is NonNullable<typeof x> => x !== null);
   return (
-    <span className="grid w-28 grid-cols-7 gap-px" aria-hidden="true">
+    <span className="grid w-28 shrink-0 grid-cols-7 gap-px overflow-hidden rounded-md" aria-hidden="true">
       {DAY_ORDER.map((day) => (
-        <span key={day} className="relative block h-[90px] bg-gray-100">
-          {entries.flatMap(({ section }) =>
+        <span key={day} className="relative block h-[90px] bg-paper">
+          {entries.flatMap(({ course, section }) =>
             section.meetings
               .filter((m) => m.days.includes(day))
               .map((m, i) => (
                 <span
                   key={`${section.id}-${i}`}
-                  className="absolute inset-x-0 block rounded-sm bg-blue-400"
+                  className={`absolute inset-x-0 block rounded-sm ${courseColor(course.id).dot}`}
                   style={{
                     top: `${(m.startMin - GRID_START_MIN) / 10}px`,
                     height: `${(m.endMin - m.startMin) / 10}px`,
@@ -77,15 +78,20 @@ export function SolverPanel() {
   }
 
   return (
-    <div className="space-y-3 border-t p-2">
-      <h2 className="text-sm font-semibold">Schedule generator</h2>
+    <div className="space-y-4 border-t p-5">
+      <h2 className="font-display text-base font-semibold tracking-tight">Schedule generator</h2>
 
-      <ul className="space-y-1">
+      <ul className="space-y-1.5">
         {wanted.map((c) => (
-          <li key={c.id} className="flex items-center justify-between text-xs">
-            <span>{`${c.deptCode} ${c.catalogNbr} (${c.units}u)`}</span>
+          <li
+            key={c.id}
+            className="flex animate-reveal items-center gap-2 rounded-lg bg-paper px-2.5 py-1.5 text-xs font-medium"
+          >
+            <span aria-hidden="true" className={`size-2 rounded-full ${courseColor(c.id).dot}`} />
+            <span className="flex-1">{`${c.deptCode} ${c.catalogNbr} (${c.units}u)`}</span>
             <button
               type="button"
+              className="grid size-5 place-items-center rounded text-sm leading-none text-muted transition hover:bg-ink/10 hover:text-ink"
               aria-label={`Remove ${c.deptCode} ${c.catalogNbr}`}
               onClick={() => removeWantedCourse(c.id)}
             >
@@ -94,24 +100,28 @@ export function SolverPanel() {
           </li>
         ))}
         {wanted.length === 0 && (
-          <li className="text-xs text-gray-500">Add courses with "+ Solver".</li>
+          <li className="text-xs text-muted">Add courses with "+ Solver".</li>
         )}
       </ul>
 
-      <p className="text-xs font-medium">{`${units} units`}</p>
+      <p className="text-xs font-semibold">{`${units} units`}</p>
       {units > prefs.maxUnits && (
-        <p className="rounded bg-amber-100 p-1 text-xs text-amber-800">
+        <p className="animate-reveal rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-900">
           {`Over ${prefs.maxUnits} units — allowed, but requires an overload pardon.`}
         </p>
       )}
 
       <fieldset className="text-xs">
-        <legend className="font-medium">Avoid days</legend>
-        <div className="flex flex-wrap gap-2">
+        <legend className="mb-1.5 font-medium text-muted">Avoid days</legend>
+        <div className="flex flex-wrap gap-1">
           {DAY_ORDER.map((day) => (
-            <label key={day} className="flex items-center gap-1">
+            <label
+              key={day}
+              className="cursor-pointer rounded-full border px-2 py-1 font-medium transition select-none hover:border-ink/40 has-checked:border-ink has-checked:bg-ink has-checked:text-white has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-titan"
+            >
               <input
                 type="checkbox"
+                className="sr-only"
                 aria-label={DAY_LABELS[day]}
                 checked={prefs.avoidDays.includes(day)}
                 onChange={() => toggleDay(day)}
@@ -122,11 +132,11 @@ export function SolverPanel() {
         </div>
       </fieldset>
 
-      <div className="grid grid-cols-2 gap-2 text-xs">
+      <div className="grid grid-cols-2 gap-3 text-xs font-medium text-muted">
         <label>
           Earliest start
           <select
-            className="mt-1 w-full rounded border p-1"
+            className="field mt-1"
             value={prefs.earliestStart ?? ''}
             onChange={(e) =>
               setPrefs({
@@ -143,7 +153,7 @@ export function SolverPanel() {
         <label>
           Latest end
           <select
-            className="mt-1 w-full rounded border p-1"
+            className="field mt-1"
             value={prefs.latestEnd ?? ''}
             onChange={(e) =>
               setPrefs({ latestEnd: e.target.value === '' ? undefined : Number(e.target.value) })
@@ -157,7 +167,7 @@ export function SolverPanel() {
         </label>
       </div>
 
-      <div className="grid grid-cols-2 gap-2 text-xs">
+      <div className="grid grid-cols-2 gap-3 text-xs font-medium text-muted">
         <label>
           {`Prof rating weight (${prefs.weightProfRating.toFixed(1)})`}
           <input
@@ -186,7 +196,7 @@ export function SolverPanel() {
 
       <button
         type="button"
-        className="w-full rounded bg-blue-600 py-1 text-sm text-white disabled:bg-gray-300"
+        className="w-full rounded-lg bg-titan py-2.5 text-sm font-semibold text-ink shadow-sm transition hover:brightness-105 active:scale-[0.98] disabled:bg-line disabled:text-muted disabled:shadow-none disabled:active:scale-100"
         disabled={wanted.length === 0}
         onClick={generate}
       >
@@ -200,7 +210,7 @@ export function SolverPanel() {
               <button
                 type="button"
                 data-testid="candidate"
-                className="flex w-full items-center gap-2 rounded border bg-white p-2 text-left text-xs hover:border-blue-400"
+                className="flex w-full animate-reveal items-center gap-3 rounded-xl border bg-white p-2.5 text-left text-xs transition hover:-translate-y-px hover:border-ink/40 hover:shadow-md hover:shadow-ink/10 active:translate-y-0"
                 onClick={() => loadCandidate(c.sectionIds)}
               >
                 <MiniCal sectionIds={c.sectionIds} catalog={catalog} />
@@ -212,8 +222,8 @@ export function SolverPanel() {
       )}
 
       {result !== null && result.candidates.length === 0 && (
-        <div className="space-y-1 text-xs text-red-700">
-          <p>No conflict-free schedule found.</p>
+        <div className="animate-reveal space-y-1 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-800">
+          <p className="font-semibold">No conflict-free schedule found.</p>
           {result.eliminations.map((e) => (
             <p key={e.courseId}>
               {`${e.courseLabel}: all sections eliminated (${e.reasons.join(', ')})`}
