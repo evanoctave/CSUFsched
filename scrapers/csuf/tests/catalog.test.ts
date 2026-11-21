@@ -41,6 +41,23 @@ describe('parseCatalog', () => {
     expect(parseCatalog(html).subjects).toEqual([{ code: 'ACCT', name: 'Accounting & Finance' }]);
   });
 
+  it('finds dropdowns despite extra whitespace and reordered attributes', () => {
+    const html = `
+      <select  id='CLASS_SRCH_WRK2_STRM$35$' name='CLASS_SRCH_WRK2_STRM$35$' tabindex='35'>
+        <option value="2267">Fall 2026</option>
+      </select>
+      <select
+        class='PSDROPDOWNLIST'
+        name='SSR_CLSRCH_WRK_SUBJECT_SRCH$0'>
+        <option value="CPSC">Computer Science</option>
+      </select>
+      <select id='x' name="SSR_CLSRCH_WRK_ACAD_CAREER$2"><option value="UGRD">Undergraduate</option></select>`;
+    const catalog = parseCatalog(html);
+    expect(catalog.terms).toEqual([{ code: '2267', name: 'Fall 2026' }]);
+    expect(catalog.subjects).toEqual([{ code: 'CPSC', name: 'Computer Science' }]);
+    expect(catalog.careers).toEqual([{ code: 'UGRD', name: 'Undergraduate' }]);
+  });
+
   it('throws when a required dropdown is missing', () => {
     expect(() => parseCatalog('<html>nothing</html>')).toThrow(/CLASS_SRCH_WRK2_STRM/);
   });

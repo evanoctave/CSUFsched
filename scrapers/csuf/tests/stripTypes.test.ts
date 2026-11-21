@@ -1,7 +1,7 @@
 import { execFile } from 'node:child_process';
 import path from 'node:path';
 import { promisify } from 'node:util';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { describe, it } from 'vitest';
 
 const run = promisify(execFile);
@@ -14,6 +14,12 @@ describe('strip-types compatibility', () => {
   // import under Node catches the difference. `--check` does not: it parses
   // without applying the strip-only restrictions.
   it('imports the package entrypoint under node --experimental-strip-types', async () => {
-    await run(process.execPath, ['--experimental-strip-types', '-e', `import(${JSON.stringify(entry)})`]);
+    // import() needs a file:// URL; a bare Windows path is rejected as an
+    // unsupported URL scheme.
+    await run(process.execPath, [
+      '--experimental-strip-types',
+      '-e',
+      `import(${JSON.stringify(pathToFileURL(entry).href)})`,
+    ]);
   }, 30_000);
 });

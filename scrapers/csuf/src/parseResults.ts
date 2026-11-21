@@ -5,7 +5,20 @@ const NO_MEETING = new Set(['', 'TBA', 'To Be Arranged', 'Asynchronous']);
 const NO_ROOM = new Set(['', 'TBA', 'Online']);
 
 export function parseDayTime(raw: string): { days: string; start: string; end: string } {
-  const value = raw.trim();
+  // PeopleSoft prints every meeting pattern of a section in one cell, one per
+  // line break. A row models a single pattern, so identical repeats (a lecture
+  // and lab at the same time) collapse into one; differing patterns still fail
+  // loudly rather than silently dropping a meeting.
+  const lines = [
+    ...new Set(
+      raw
+        .split(/[\r\n]+/)
+        .map((line) => line.trim())
+        .filter((line) => line !== ''),
+    ),
+  ];
+  if (lines.length > 1) throw new Error(`multiple day/times "${raw}"`);
+  const value = lines[0] ?? '';
   if (NO_MEETING.has(value)) return { days: '', start: '', end: '' };
   const m = /^([A-Za-z]+)\s+(\d{1,2}:\d{2}[AP]M)\s*-\s*(\d{1,2}:\d{2}[AP]M)$/.exec(value);
   if (m === null) throw new Error(`unrecognized day/time "${raw}"`);
