@@ -1,0 +1,597 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lunch Bracket</title>
+<style>
+  :root {
+    --bg: #f7f1e7;
+    --bg-2: #efe6d6;
+    --ink: #1f1a14;
+    --muted: #6b5e4f;
+    --muted-2: #9a8c7a;
+    --card: #fffdf7;
+    --line: #e3d6c2;
+    --line-2: #d6c6ad;
+    --accent: #d94a24;
+    --accent-soft: rgba(217, 74, 36, 0.12);
+    --win: #2d6a4f;
+    --winbg: #eaf3ee;
+    --shadow-sm: 0 1px 2px rgba(31, 26, 20, 0.06);
+    --shadow-md: 0 8px 24px -16px rgba(31, 26, 20, 0.25);
+    --shadow-lg: 0 24px 48px -32px rgba(31, 26, 20, 0.35);
+    --radius: 16px;
+    --radius-sm: 10px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    min-height: 100vh;
+    color: var(--ink);
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-feature-settings: "ss01", "cv11";
+    background:
+      radial-gradient(1200px 600px at 50% -10%, #fff5e0 0%, rgba(255, 245, 224, 0) 65%),
+      linear-gradient(180deg, var(--bg) 0%, var(--bg-2) 100%);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* ---------- Header ---------- */
+  header {
+    padding: 40px 24px 16px;
+    text-align: center;
+    max-width: 720px;
+    margin: 0 auto;
+  }
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+  .eyebrow::before, .eyebrow::after {
+    content: "";
+    width: 28px;
+    height: 1px;
+    background: var(--line-2);
+  }
+  h1 {
+    margin: 0;
+    font-size: clamp(30px, 5vw, 46px);
+    letter-spacing: -0.035em;
+    font-weight: 800;
+    line-height: 1.05;
+  }
+  .sub {
+    margin: 10px auto 0;
+    max-width: 48ch;
+    color: var(--muted);
+    font-size: 15px;
+    line-height: 1.5;
+  }
+
+  .meta {
+    margin: 18px auto 0;
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .pill {
+    border: 1px solid var(--line);
+    background: var(--card);
+    border-radius: 999px;
+    padding: 6px 13px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--muted);
+    letter-spacing: 0.01em;
+    box-shadow: var(--shadow-sm);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .pill strong { color: var(--ink); font-weight: 700; }
+  .pill .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--accent);
+    display: inline-block;
+  }
+
+  .progress-bar {
+    margin: 16px auto 0;
+    max-width: 320px;
+    height: 4px;
+    background: var(--line);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  .progress-bar > span {
+    display: block;
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--accent), #f07a4a);
+    border-radius: 999px;
+    transition: width 0.35s ease;
+  }
+
+  /* ---------- Champion ---------- */
+  #champion {
+    margin: 22px auto 6px;
+    max-width: 580px;
+    border: 1px solid var(--line);
+    background: linear-gradient(180deg, #ffffff 0%, var(--winbg) 100%);
+    border-radius: 24px;
+    padding: 26px 24px;
+    text-align: center;
+    box-shadow: var(--shadow-lg);
+    animation: pop 0.4s cubic-bezier(0.2, 0.9, 0.3, 1.1);
+    position: relative;
+    overflow: hidden;
+  }
+  #champion::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(260px 120px at 50% 0%, rgba(45, 106, 79, 0.12), transparent 70%);
+    pointer-events: none;
+  }
+  @keyframes pop {
+    from { transform: scale(0.92) translateY(6px); opacity: 0; }
+    to { transform: scale(1) translateY(0); opacity: 1; }
+  }
+  #champion .eyebrow { color: var(--win); }
+  #champion .trophy { font-size: 34px; line-height: 1; margin-bottom: 6px; }
+  #champion .name {
+    margin: 4px 0 2px;
+    font-size: clamp(26px, 4vw, 36px);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+  #champion .note { margin: 8px 0 0; color: var(--muted); font-size: 13.5px; }
+
+  /* ---------- Bracket ---------- */
+  main { padding: 8px 0 0; }
+  #bracket {
+    display: flex;
+    gap: 22px;
+    align-items: stretch;
+    padding: 12px 24px 32px;
+    overflow-x: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--line-2) transparent;
+  }
+  #bracket::-webkit-scrollbar { height: 8px; }
+  #bracket::-webkit-scrollbar-thumb {
+    background: var(--line-2);
+    border-radius: 999px;
+  }
+
+  .round {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    flex: 1 0 248px;
+    min-width: 248px;
+    position: relative;
+  }
+  .round .matches {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    flex: 1;
+    justify-content: space-around;
+  }
+  .round h2 {
+    margin: 0 0 4px;
+    font-size: 10.5px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 800;
+    text-align: center;
+  }
+
+  .match {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
+    position: relative;
+  }
+  .match.is-active {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft), 0 16px 30px -20px rgba(217, 74, 36, 0.85);
+    transform: translateY(-1px);
+  }
+  .match.is-idle { opacity: 0.78; }
+  .match .hint {
+    font-size: 9.5px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 800;
+    text-align: center;
+    padding: 7px 0 2px;
+    background: linear-gradient(180deg, rgba(217,74,36,0.06), transparent);
+  }
+
+  .team {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    text-align: left;
+    padding: 12px 14px;
+    font: inherit;
+    font-size: 14.5px;
+    color: inherit;
+    background: none;
+    border: 0;
+    cursor: default;
+    transition: background 0.14s ease;
+  }
+  .match.is-active .team { cursor: pointer; }
+  .match.is-active .team:hover { background: #fff1e6; }
+  .match.is-active .team:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: -2px;
+  }
+  .team + .team { border-top: 1px dashed var(--line); }
+  .team .emoji {
+    font-size: 20px;
+    line-height: 1;
+    width: 26px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+  .team .name { flex: 1; font-weight: 650; letter-spacing: -0.01em; }
+  .team.winner {
+    background: var(--winbg);
+    color: var(--win);
+    font-weight: 750;
+  }
+  .team.winner .name::after { content: " ✓"; font-weight: 800; }
+  .team.loser { opacity: 0.4; text-decoration: line-through; }
+  .team.empty {
+    color: var(--muted-2);
+    font-style: italic;
+    font-weight: 500;
+    cursor: default;
+  }
+  .team.empty .emoji { opacity: 0.35; }
+
+  .bye-note {
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted-2);
+    padding: 0 14px 10px;
+  }
+
+  /* ---------- Footer ---------- */
+  footer {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+    padding: 6px 24px 40px;
+  }
+  button.btn {
+    font: inherit;
+    font-size: 13.5px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    border-radius: var(--radius-sm);
+    padding: 10px 18px;
+    cursor: pointer;
+    border: 1px solid var(--line);
+    background: var(--card);
+    color: var(--ink);
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.12s ease, background 0.16s ease, box-shadow 0.16s ease;
+  }
+  button.btn:hover {
+    background: #fff;
+    box-shadow: var(--shadow-md);
+  }
+  button.btn:active { transform: translateY(1px); }
+  button.btn.primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+  button.btn.primary:hover { background: #c2401f; }
+  button.btn:disabled { opacity: 0.4; cursor: not-allowed; box-shadow: none; }
+  button.btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  @media (max-width: 640px) {
+    header { padding: 28px 16px 12px; }
+    #bracket { padding: 8px 16px 24px; gap: 16px; }
+    footer { padding: 6px 16px 28px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+  <header>
+    <div class="eyebrow">Lunch Bracket</div>
+    <h1>One lunch, ten contenders.</h1>
+    <p class="sub">Tap the place you'd rather eat at, round by round, until a champion is crowned.</p>
+    <div class="meta">
+      <span class="pill"><span class="dot"></span><strong id="progress">0</strong> / 9 picks</span>
+      <span class="pill" id="round-pill">Play-in round</span>
+    </div>
+    <div class="progress-bar" aria-hidden="true"><span id="progress-fill"></span></div>
+  </header>
+
+  <div id="champion" hidden></div>
+
+  <main>
+    <div id="bracket" aria-live="polite"></div>
+  </main>
+
+  <footer>
+    <button class="btn" id="undo" type="button">Undo pick</button>
+    <button class="btn" id="restart" type="button">Restart</button>
+    <button class="btn primary" id="shuffle" type="button">New bracket</button>
+  </footer>
+
+<script>
+(function () {
+  "use strict";
+
+  var PLACES = [
+    { name: "Din Tai Fung", emoji: "\uD83E\uDD5F" },
+    { name: "Roll N Grill", emoji: "\uD83C\uDF63" },
+    { name: "Chick-fil-A", emoji: "\uD83D\uDC14" },
+    { name: "California Fish Grill", emoji: "\uD83D\uDC1F" },
+    { name: "Costco", emoji: "\uD83D\uDED2" },
+    { name: "Sonic", emoji: "\uD83E\uDD64" },
+    { name: "Patrick's House", emoji: "\uD83C\uDFE1" },
+    { name: "Tokyo Eats", emoji: "\uD83C\uDF71" },
+    { name: "The Hat", emoji: "\uD83C\uDF54" },
+    { name: "Chipotle", emoji: "\uD83C\uDF2F" }
+  ];
+
+  var ROUND_NAMES = ["Play-in", "Quarterfinals", "Semifinals", "Final"];
+  var TOTAL_PICKS = 9;
+
+  var state = {
+    structure: [],
+    picks: new Map()
+  };
+
+  function shuffle(list) {
+    for (var i = list.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = list[i];
+      list[i] = list[j];
+      list[j] = tmp;
+    }
+    return list;
+  }
+
+  function emptyMatches(n) {
+    var out = [];
+    for (var i = 0; i < n; i++) out.push({ a: null, b: null });
+    return out;
+  }
+
+  function buildStructure() {
+    var teams = shuffle(PLACES.slice());
+    var bothFilled = new Set(shuffle([0, 1, 2, 3, 4, 5, 6, 7]).slice(0, 2));
+    var round0 = [];
+    var t = 0;
+
+    for (var p = 0; p < 8; p++) {
+      if (bothFilled.has(p)) {
+        round0.push({ a: teams[t++], b: teams[t++] });
+      } else {
+        var team = teams[t++];
+        round0.push(Math.random() < 0.5 ? { a: team, b: null } : { a: null, b: team });
+      }
+    }
+
+    return [round0, emptyMatches(4), emptyMatches(2), emptyMatches(1)];
+  }
+
+  function derive() {
+    var rounds = state.structure.map(function (round) {
+      return round.map(function (m) { return { a: m.a, b: m.b, winner: null }; });
+    });
+
+    for (var r = 0; r < rounds.length; r++) {
+      for (var i = 0; i < rounds[r].length; i++) {
+        var m = rounds[r][i];
+
+        if (r > 0) {
+          m.a = rounds[r - 1][i * 2].winner || null;
+          m.b = rounds[r - 1][i * 2 + 1].winner || null;
+        }
+
+        if (m.a && !m.b) {
+          m.winner = m.a;
+        } else if (m.b && !m.a) {
+          m.winner = m.b;
+        } else if (m.a && m.b) {
+          var pick = state.picks.get(r + "-" + i);
+          if (pick === m.a || pick === m.b) m.winner = pick;
+        }
+      }
+    }
+
+    return rounds;
+  }
+
+  function findActive(rounds) {
+    for (var r = 0; r < rounds.length; r++) {
+      for (var i = 0; i < rounds[r].length; i++) {
+        var m = rounds[r][i];
+        if (m.a && m.b && !m.winner) return { r: r, i: i };
+      }
+    }
+    return null;
+  }
+
+  function teamRow(team, cls, interactive) {
+    var row = interactive ? document.createElement("button") : document.createElement("div");
+    row.className = "team " + cls;
+    if (interactive) row.type = "button";
+
+    var emoji = document.createElement("span");
+    emoji.className = "emoji";
+    emoji.textContent = team ? team.emoji : "\u00B7";
+
+    var name = document.createElement("span");
+    name.className = "name";
+    name.textContent = team ? team.name : "waiting\u2026";
+
+    row.appendChild(emoji);
+    row.appendChild(name);
+    return row;
+  }
+
+  function matchCard(match, r, i, active) {
+    var isActive = !!(active && active.r === r && active.i === i);
+    var isBye = !!(match.a && !match.b) || !!(match.b && !match.a);
+    var waiting = !match.a || !match.b ? !isBye : false;
+
+    var card = document.createElement("div");
+    card.className = "match" + (isActive ? " is-active" : "") + (!isActive ? " is-idle" : "");
+
+    if (isActive) {
+      var hint = document.createElement("div");
+      hint.className = "hint";
+      hint.textContent = "tap to pick";
+      card.appendChild(hint);
+    }
+
+    [match.a, match.b].forEach(function (team) {
+      var cls = "";
+      if (!team) cls = "empty";
+      else if (match.winner === team) cls = "winner";
+      else if (match.winner && match.winner !== team) cls = "loser";
+
+      var row = teamRow(team, cls, isActive && !!team);
+      if (isActive && team) {
+        row.setAttribute("aria-label", "Pick " + team.name);
+        row.addEventListener("click", function () {
+          state.picks.set(r + "-" + i, team.name);
+          render();
+        });
+      }
+      card.appendChild(row);
+    });
+
+    if (isBye) {
+      var note = document.createElement("div");
+      note.className = "bye-note";
+      note.textContent = "advances on a bye";
+      card.appendChild(note);
+    }
+
+    if (waiting) card.classList.add("is-idle");
+
+    return card;
+  }
+
+  function renderChampion(rounds) {
+    var box = document.getElementById("champion");
+    var winner = rounds[rounds.length - 1][0].winner;
+
+    if (!winner) {
+      box.hidden = true;
+      box.innerHTML = "";
+      return;
+    }
+
+    box.hidden = false;
+    box.innerHTML =
+      '<div class="eyebrow">Lunch is decided</div>' +
+      '<div class="trophy">\uD83C\uDFC6</div>' +
+      '<div class="name">' + winner.emoji + " " + winner.name + "</div>" +
+      '<p class="note">Go eat. Tell them the bracket sent you.</p>';
+  }
+
+  function render() {
+    var rounds = derive();
+    var active = findActive(rounds);
+    var bracket = document.getElementById("bracket");
+    bracket.innerHTML = "";
+
+    rounds.forEach(function (matches, r) {
+      var col = document.createElement("section");
+      col.className = "round";
+
+      var heading = document.createElement("h2");
+      heading.textContent = ROUND_NAMES[r];
+      col.appendChild(heading);
+
+      var stack = document.createElement("div");
+      stack.className = "matches";
+      matches.forEach(function (m, i) {
+        stack.appendChild(matchCard(m, r, i, active));
+      });
+      col.appendChild(stack);
+
+      bracket.appendChild(col);
+    });
+
+    var done = state.picks.size;
+    document.getElementById("progress").textContent = done;
+    document.getElementById("round-pill").textContent =
+      active ? ROUND_NAMES[active.r] + " \u00B7 match " + (active.i + 1) : "Bracket complete";
+
+    var fill = document.getElementById("progress-fill");
+    if (fill) fill.style.width = (done / TOTAL_PICKS * 100) + "%";
+
+    document.getElementById("undo").disabled = done === 0;
+
+    renderChampion(rounds);
+
+    var activeCard = bracket.querySelector(".match.is-active");
+    if (activeCard && typeof activeCard.scrollIntoView === "function") {
+      activeCard.scrollIntoView({ block: "nearest", inline: "center", behavior: "smooth" });
+    }
+  }
+
+  function newBracket() {
+    state.structure = buildStructure();
+    state.picks.clear();
+    render();
+  }
+
+  document.getElementById("undo").addEventListener("click", function () {
+    var keys = Array.from(state.picks.keys());
+    if (!keys.length) return;
+    state.picks.delete(keys[keys.length - 1]);
+    render();
+  });
+
+  document.getElementById("restart").addEventListener("click", function () {
+    state.picks.clear();
+    render();
+  });
+
+  document.getElementById("shuffle").addEventListener("click", newBracket);
+
+  newBracket();
+})();
+</script>
+</body>
+</html>
