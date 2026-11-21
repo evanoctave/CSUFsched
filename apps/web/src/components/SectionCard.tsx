@@ -20,14 +20,14 @@ export function SectionCard({ course, section }: DragData) {
       {...listeners}
       {...attributes}
       data-testid={`section-card-${section.id}`}
-      className={`cursor-grab rounded border bg-white p-2 text-xs ${isDragging ? 'opacity-50' : ''}`}
+      className={`cursor-grab touch-none space-y-0.5 rounded-lg border bg-white p-2.5 text-xs transition hover:-translate-y-px hover:border-ink/35 hover:shadow-md hover:shadow-ink/10 active:cursor-grabbing ${isDragging ? 'opacity-40' : ''}`}
     >
       <div className="flex items-center justify-between">
-        <span className="font-medium">{`Sec ${section.sectionCode}`}</span>
+        <span className="font-semibold">{`Sec ${section.sectionCode}`}</span>
         <span
-          className={`rounded px-1 ${
+          className={`rounded-full px-2 py-0.5 text-[11px] font-medium capitalize ${
             section.enrollmentStatus === 'open'
-              ? 'bg-green-100 text-green-800'
+              ? 'bg-emerald-100 text-emerald-800'
               : section.enrollmentStatus === 'waitlist'
                 ? 'bg-amber-100 text-amber-800'
                 : 'bg-red-100 text-red-800'
@@ -36,7 +36,7 @@ export function SectionCard({ course, section }: DragData) {
           {section.enrollmentStatus}
         </span>
       </div>
-      <div className="text-gray-600">
+      <div className="text-muted">
         {section.meetings.length === 0
           ? 'Online / async'
           : section.meetings
@@ -47,9 +47,9 @@ export function SectionCard({ course, section }: DragData) {
         {section.professor !== null ? <ProfPopover prof={section.professor} /> : 'Staff'}
       </div>
       {section.professor !== null && section.professor.topTags.length > 0 && (
-        <div className="mt-1">
+        <div className="pt-1">
           {section.professor.topTags.slice(0, 2).map((tag) => (
-            <span key={tag} className="mr-1 inline-block rounded bg-gray-100 px-1">
+            <span key={tag} className="mr-1 inline-block rounded-full bg-paper px-2 py-0.5 text-muted">
               {tag}
             </span>
           ))}
